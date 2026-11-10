@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#40030a">
+<title>Louze</title>
+<link rel="icon" id="favicon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --fondo: #40030a;       /* vinotinto del logo */
+    --superficie: #560c18;
+    --hundido: #2c0207;
+    --borde: #7a2433;
+    --oro: #e3c996;         /* dorado de la corona */
+    --crema: #f8eee3;
+    --texto2: #d9bcbf;
+    --rojo: #9b1c2e;
+    --sin-foto: radial-gradient(circle at 50% 35%, #6e1626 0%, #2c0207 80%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+  body { font-family: "Manrope", system-ui, sans-serif; background: var(--fondo); color: var(--crema); line-height: 1.45; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; border: none; background: none; }
+  ::placeholder { color: var(--texto2); opacity: .8; }
+  :focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+
+  /* Encabezado */
+  .top { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: rgba(64,3,10,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--borde); }
+  .marca { display: flex; align-items: center; gap: 10px; font-family: "Marcellus", serif; font-size: 1.5rem; letter-spacing: .04em; color: var(--oro); }
+  .marca .logo { height: 30px; }
+  .btn-carrito { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; background: var(--oro); color: var(--fondo); font-weight: 700; font-size: .9rem; }
+  .contador { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--fondo); color: var(--oro); font-size: .78rem; display: grid; place-items: center; }
+
+  /* Portada */
+  .hero { max-width: 1100px; margin: 0 auto; padding: 40px 16px 28px; text-align: center; display: grid; justify-items: center; }
+  .logo-hero { width: 120px; margin-bottom: 18px; }
+  .hero h1 { font-family: "Marcellus", serif; font-weight: 400; font-size: clamp(2.3rem, 8vw, 4rem); line-height: 1.05; max-width: 14ch;
+    background: linear-gradient(100deg, #b8955c 0%, #f5e6c1 45%, #e3c996 55%, #b8955c 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { margin-top: 14px; color: var(--texto2); max-width: 42ch; }
+  .redes { display: flex; gap: 10px; margin-top: 18px; }
+  .red { padding: 8px 16px; border: 1px solid var(--oro); border-radius: 999px; color: var(--oro); text-decoration: none; font-size: .88rem; font-weight: 600; }
+
+  /* Filtros */
+  .filtros { max-width: 1100px; margin: 0 auto; padding: 0 16px 16px; }
+  .buscar { width: 100%; padding: 12px 14px; border: 1px solid var(--borde); border-radius: 12px; background: var(--hundido); }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-top: 12px; scrollbar-width: none; }
+  .chip { flex: none; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--borde); font-size: .88rem; }
+  .chip.activo { background: var(--oro); border-color: var(--oro); color: var(--fondo); font-weight: 600; }
+
+  /* Catálogo */
+  .grid { max-width: 1100px; margin: 0 auto; padding: 0 16px 48px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  @media (min-width: 720px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1000px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+  .card { background: var(--superficie); border-radius: 16px; overflow: hidden; border: 1px solid var(--borde); display: flex; flex-direction: column; }
+  .foto { position: relative; aspect-ratio: 1; background: var(--sin-foto); display: grid; place-items: center; }
+  .foto img { width: 100%; height: 100%; object-fit: cover; }
+  .foto .cat { font-family: "Marcellus", serif; font-size: 1.25rem; color: var(--oro); }
+  .etiqueta { position: absolute; top: 10px; left: 10px; padding: 4px 9px; border-radius: 999px; font-size: .72rem; font-weight: 700; background: var(--crema); color: var(--fondo); }
+  .etiqueta.poco { color: var(--rojo); }
+  .etiqueta.agotado { background: var(--hundido); color: var(--crema); }
+  .etiqueta.personal { left: auto; right: 10px; }
+  .card.sin-stock .foto { filter: grayscale(1) opacity(.55); }
+  .info { padding: 12px; display: flex; flex-direction: column; flex: 1; }
+  .nombre { font-weight: 600; font-size: .95rem; }
+  .precio { color: var(--oro); font-size: .92rem; font-weight: 600; margin-bottom: 10px; }
+  .agregar { margin-top: auto; padding: 10px; border-radius: 10px; background: var(--oro); color: var(--fondo); font-weight: 700; font-size: .88rem; }
+  .agregar:disabled { background: var(--hundido); color: var(--texto2); cursor: not-allowed; }
+  .vacio { color: var(--texto2); text-align: center; padding: 24px 0; grid-column: 1 / -1; }
+  footer { text-align: center; padding: 8px 16px 100px; color: var(--texto2); font-size: .85rem; display: grid; gap: 6px; justify-items: center; }
+  .link-admin { color: var(--texto2); font-size: .8rem; text-decoration: underline; }
+
+  /* Botón flotante de WhatsApp */
+  .flotante { position: fixed; right: 16px; bottom: 16px; z-index: 15; display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 999px; background: var(--oro); color: var(--fondo); font-weight: 700; text-decoration: none; box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+
+  /* Carrito */
+  .capa { position: fixed; inset: 0; background: rgba(20,0,4,.6); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 20; }
+  .capa.on { opacity: 1; pointer-events: auto; }
+  .carrito { position: fixed; top: 0; right: 0; height: 100%; width: min(420px, 100%); background: var(--fondo); z-index: 30; transform: translateX(100%); transition: transform .3s ease; display: flex; flex-direction: column; border-left: 1px solid var(--borde); }
+  .carrito.on { transform: none; }
+  .carrito-top { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--borde); }
+  .carrito-top h2 { font-family: "Marcellus", serif; font-weight: 400; font-size: 1.5rem; color: var(--oro); }
+  .x { font-size: 1.7rem; line-height: 1; padding: 4px 8px; }
+  .cuerpo { flex: 1; overflow-y: auto; padding: 8px 16px 24px; }
+  .item { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--borde); }
+  .mini { width: 56px; height: 56px; border-radius: 10px; flex: none; object-fit: cover; background: var(--sin-foto); }
+  .mini.corazon { background: none; object-fit: contain; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-info small { color: var(--texto2); }
+  .cant { display: flex; align-items: center; gap: 8px; }
+  .cant button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--borde); background: var(--hundido); }
+  .cant button:disabled { opacity: .4; cursor: not-allowed; }
+  .quitar { color: var(--texto2); font-size: .82rem; text-decoration: underline; }
+  .form { display: grid; gap: 12px; margin-top: 18px; }
+  .form label { display: grid; gap: 6px; font-size: .85rem; font-weight: 600; }
+  .form input, .form select, .form textarea { padding: 11px 12px; border: 1px solid var(--borde); border-radius: 10px; background: var(--hundido); font-weight: 400; min-width: 0; }
+  .form input[type=checkbox] { width: 18px; height: 18px; padding: 0; flex: none; accent-color: var(--oro); }
+  .form .check { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+  .totales { background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; font-size: .9rem; }
+  .totales div { display: flex; justify-content: space-between; }
+  .totales .total { font-weight: 700; font-size: 1.05rem; padding-top: 8px; border-top: 1px solid var(--borde); color: var(--oro); }
+  .btn-wsp { padding: 14px; border-radius: 12px; background: var(--oro); color: var(--fondo); font-weight: 700; }
+  .vaciar { justify-self: center; color: var(--texto2); font-size: .82rem; text-decoration: underline; }
+
+  /* Ventanas */
+  .modal { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(20,0,4,.7); }
+  .caja { background: var(--superficie); border: 1px solid var(--borde); border-radius: 18px; padding: 20px; width: min(420px, 100%); max-height: 100%; overflow-y: auto; display: grid; gap: 12px; }
+  .caja.form { margin-top: 0; }
+  .caja h3 { font-family: "Marcellus", serif; font-weight: 400; font-size: 1.5rem; color: var(--oro); }
+  .sub { color: var(--texto2); font-size: .88rem; }
+  #lienzo { width: 100%; aspect-ratio: 1; border-radius: 14px; background: var(--hundido); touch-action: none; cursor: grab; }
+  .fila { display: flex; gap: 10px; align-items: center; }
+  .fila input[type=range] { flex: 1; accent-color: var(--oro); }
+  .btn, .btn-sec { padding: 12px 16px; border-radius: 10px; font-weight: 700; text-align: center; cursor: pointer; }
+  .btn { background: var(--oro); color: var(--fondo); }
+  .btn-sec { border: 1px solid var(--borde); background: var(--hundido); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .paso { display: flex; gap: 12px; align-items: center; }
+  .paso img { width: 52px; height: 52px; object-fit: contain; }
+  .paso button { flex: 1; }
+  .peligro { color: #ff9e9e; }
+
+  /* Panel del emprendedor */
+  .admin { position: fixed; inset: 0; z-index: 35; background: var(--fondo); overflow-y: auto; }
+  .admin-top { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--hundido); border-bottom: 1px solid var(--borde); }
+  .admin-top h2 { font-family: "Marcellus", serif; font-weight: 400; font-size: 1.35rem; color: var(--oro); }
+  .admin-top button { text-decoration: underline; font-size: .9rem; }
+  .tabs { display: flex; gap: 8px; max-width: 720px; margin: 0 auto; padding: 14px 16px; }
+  .seccion { max-width: 720px; margin: 0 auto; padding: 0 16px 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .seccion.form { margin-top: 0; }
+  .lista { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .fila-admin { display: flex; gap: 10px; align-items: center; padding: 10px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; }
+  .fila-admin .mini { width: 48px; height: 48px; }
+  .fila-admin input { min-width: 0; padding: 10px; border: 1px solid var(--borde); border-radius: 8px; background: var(--hundido); }
+  .vista { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; }
+  .fila-admin select { min-width: 0; padding: 10px; border: 1px solid var(--borde); border-radius: 8px; background: var(--hundido); }
+  .grupo { display: grid; gap: 10px; }
+  .datos-pago { display: grid; gap: 8px; padding: 12px 14px; background: var(--hundido); border: 1px solid var(--borde); border-radius: 12px; }
+  .datos-pago h4 { font-size: .85rem; color: var(--oro); }
+  .dato { display: flex; align-items: center; gap: 10px; }
+  .dato div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .dato small { display: block; color: var(--texto2); font-size: .75rem; }
+  .copiar { color: var(--oro); font-size: .82rem; font-weight: 600; text-decoration: underline; }
+  .pago-admin { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .pago-admin textarea { padding: 10px; border: 1px solid var(--borde); border-radius: 8px; background: var(--hundido); font-size: .88rem; }
+  .info-retiro { padding: 12px 14px; border: 1px solid var(--oro); border-radius: 12px; color: var(--oro); font-size: .9rem; }
+  .link { color: var(--oro); font-size: .88rem; text-decoration: underline; }
+  .totales .total + .total { border-top: none; padding-top: 0; font-size: .95rem; }
+
+  .toast { position: fixed; bottom: 84px; left: 50%; transform: translate(-50%, 20px); background: var(--crema); color: var(--fondo); font-weight: 600; padding: 10px 16px; border-radius: 999px; font-size: .88rem; opacity: 0; transition: .25s; z-index: 50; pointer-events: none; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="marca"><img class="logo" alt=""><span id="marca"></span></div>
+  <button class="btn-carrito" id="abrirCarrito">Carrito <span class="contador" id="contador">0</span></button>
+</header>
+
+<section class="hero">
+  <img class="logo logo-hero" alt="Logo de la tienda">
+  <h1>Hecho para brillar contigo</h1>
+  <p>Accesorios de acero inoxidable que no se oxidan ni pierden su color.</p>
+  <div class="redes" id="redes"></div>
+</section>
+
+<div class="filtros">
+  <input class="buscar" id="buscar" type="search" placeholder="Buscar collares, anillos, relicarios…">
+  <div class="chips" id="chips"></div>
+</div>
+
+<main class="grid" id="catalogo"></main>
+
+<footer>
+  <p id="pie"></p>
+  <button class="link-admin" id="entrarAdmin">Acceso emprendedor</button>
+</footer>
+
+<a class="flotante" id="btnWsp" target="_blank" rel="noopener">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z"/></svg>
+  WhatsApp
+</a>
+
+<!-- Carrito -->
+<div class="capa" id="capa"></div>
+<aside class="carrito" id="carrito">
+  <div class="carrito-top">
+    <h2>Tu pedido</h2>
+    <button class="x" id="cerrarCarrito" aria-label="Cerrar carrito">×</button>
+  </div>
+  <div class="cuerpo">
+    <div id="items"></div>
+    <form class="form" id="formPedido">
+      <label>Nombre
+        <input id="nombre" required placeholder="Tu nombre y apellido">
+      </label>
+      <label>Entrega
+        <select id="zona" required></select>
+      </label>
+      <p class="info-retiro" id="infoRetiro" hidden></p>
+      <div class="grupo" id="campoDir">
+        <label>Ubicación en Google Maps
+          <input id="ubicacion" inputmode="url" autocomplete="off" placeholder="Pega aquí el enlace de tu ubicación">
+        </label>
+        <button type="button" class="btn-sec" id="miUbicacion">Usar mi ubicación actual</button>
+        <p class="sub">Si no estás en el lugar de entrega: abre Google Maps, mantén presionado el sitio, toca Compartir y copia el enlace.</p>
+        <a class="link" id="verMapa" target="_blank" rel="noopener" hidden>Ver la ubicación en el mapa</a>
+        <label>Punto de referencia (opcional)
+          <textarea id="direccion" rows="2" placeholder="Ej: casa blanca con portón negro"></textarea>
+        </label>
+      </div>
+      <label>Método de pago
+        <select id="pago"></select>
+      </label>
+      <div class="datos-pago" id="datosPago" hidden></div>
+      <label id="campoRef" hidden><span id="etqRef"></span>
+        <input id="referencia" inputmode="numeric" autocomplete="off" placeholder="Escríbelo cuando hayas pagado">
+      </label>
+      <p class="sub">Los precios están en pesos colombianos. Si pagas en otra moneda, te mostramos el monto con la tasa del día.</p>
+      <div class="totales">
+        <div><span>Subtotal</span><span id="subtotal"></span></div>
+        <div><span>Delivery</span><span id="costoDelivery"></span></div>
+        <div class="total"><span>Total</span><span id="total"></span></div>
+        <div class="total" id="filaPagar" hidden><span id="etqPagar"></span><span id="montoPagar"></span></div>
+      </div>
+      <button class="btn-wsp" type="submit">Enviar pedido por WhatsApp</button>
+      <button class="vaciar" type="button" id="vaciar">Vaciar carrito</button>
+    </form>
+  </div>
+</aside>
+
+<!-- Editor de foto del relicario -->
+<div class="modal" id="modalFoto" hidden>
+  <div class="caja">
+    <h3>Personaliza tu relicario</h3>
+    <p class="sub">Sube una foto y acomódala dentro del corazón.</p>
+    <canvas id="lienzo" width="600" height="600"></canvas>
+    <label class="btn-sec" for="inputFoto">Elegir foto</label>
+    <input type="file" id="inputFoto" accept="image/*" hidden>
+    <div class="fila"><span class="sub">Zoom</span><input type="range" id="zoom" min="1" max="3" step="0.01" value="1" disabled></div>
+    <p class="sub">Arrastra la foto para moverla.</p>
+    <div class="acciones">
+      <button class="btn-sec" id="cancelarFoto">Cancelar</button>
+      <button class="btn" id="confirmarFoto" disabled>Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
+<!-- Envío de fotos -->
+<div class="modal" id="modalEnvio" hidden>
+  <div class="caja">
+    <h3>Falta enviar la foto</h3>
+    <p class="sub">WhatsApp no permite adjuntar fotos desde un enlace. Envía el pedido y luego comparte la foto en el mismo chat.</p>
+    <button class="btn" id="irWhatsapp">1. Enviar pedido por WhatsApp</button>
+    <div id="listaFotos" class="lista"></div>
+    <button class="btn-sec" id="cerrarEnvio">Listo</button>
+  </div>
+</div>
+
+<!-- Clave del emprendedor -->
+<div class="modal" id="modalPin" hidden>
+  <form class="caja form" id="formPin">
+    <h3>Acceso emprendedor</h3>
+    <p class="sub">Escribe tu clave para administrar la tienda.</p>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Clave" required>
+    <div class="acciones">
+      <button type="button" class="btn-sec" id="cancelarPin">Cancelar</button>
+      <button type="submit" class="btn">Entrar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Panel del emprendedor -->
+<section class="admin" id="panelAdmin" hidden>
+  <div class="admin-top">
+    <h2>Panel de la tienda</h2>
+    <button id="salirAdmin">Salir</button>
+  </div>
+  <div class="tabs" id="tabsAdmin">
+    <button class="chip activo" data-tab="tabProductos">Productos</button>
+    <button class="chip" data-tab="tabDelivery">Delivery</button>
+    <button class="chip" data-tab="tabPagos">Pagos</button>
+    <button class="chip" data-tab="tabTienda">Tienda</button>
+  </div>
+
+  <div class="seccion" id="tabProductos">
+    <button class="btn" id="nuevoProducto">+ Nuevo producto</button>
+    <p class="sub">Precios en pesos colombianos. Usa − y + para ajustar el stock cuando vendas o te llegue mercancía.</p>
+    <div id="listaAdmin" class="lista"></div>
+  </div>
+
+  <div class="seccion" id="tabDelivery" hidden>
+    <p class="sub">Precios en pesos colombianos. Deja el precio vacío si el delivery a esa zona se acuerda por WhatsApp. Los cambios se guardan solos.</p>
+    <div id="listaZonas" class="lista"></div>
+    <button class="btn-sec" id="nuevaZona">+ Agregar zona</button>
+  </div>
+
+  <div class="seccion" id="tabPagos" hidden>
+    <p class="sub">Los precios están en pesos. Actualiza la tasa del día para que la clienta vea cuánto pagar en cada moneda. Los cambios se guardan solos.</p>
+    <div class="form" style="margin-top:0">
+      <label>Tasa del bolívar (los pesos se dividen entre este número)
+        <input id="tasaBs" inputmode="decimal" autocomplete="off" placeholder="Ej: 2,9">
+      </label>
+      <label>Tasa del dólar (cuántos pesos vale 1 dólar)
+        <input id="tasaUsd" inputmode="decimal" autocomplete="off" placeholder="Pesos por dólar">
+      </label>
+    </div>
+    <p class="sub">Métodos de pago y la moneda en que se cobra cada uno:</p>
+    <div id="listaPagos" class="lista"></div>
+    <button class="btn-sec" id="nuevoPago">+ Agregar método</button>
+  </div>
+
+  <form class="seccion form" id="tabTienda" hidden>
+    <label>Nombre del emprendimiento
+      <input id="cfgNombre" required>
+    </label>
+    <label>WhatsApp donde llegan los pedidos (ej. 04128950580)
+      <input id="cfgWsp" inputmode="tel" required>
+    </label>
+    <label>Enlace de Instagram
+      <input id="cfgIg" type="url" placeholder="https://www.instagram.com/…">
+    </label>
+    <label>Enlace de TikTok
+      <input id="cfgTk" type="url" placeholder="https://www.tiktok.com/@…">
+    </label>
+    <label class="check"><input type="checkbox" id="cfgRetiro"> Ofrecer retiro en punto de encuentro</label>
+    <label>Punto de encuentro
+      <input id="cfgPunto" placeholder="Ej: Gimnasio El Edén, Barrio Obrero">
+    </label>
+    <label>Días y hora de retiro
+      <input id="cfgHorario" placeholder="Ej: Lunes a viernes, 5:30 p. m.">
+    </label>
+    <label>Nueva clave (déjala vacía para no cambiarla)
+      <input id="cfgPin" type="password" inputmode="numeric" autocomplete="new-password">
+    </label>
+    <button class="btn" type="submit">Guardar cambios</button>
+  </form>
+</section>
+
+<!-- Crear o editar producto -->
+<div class="modal" id="modalProducto" hidden>
+  <form class="caja form" id="formProducto">
+    <h3 id="tituloProducto">Producto</h3>
+    <label>Nombre
+      <input id="pNombre" required>
+    </label>
+    <label>Categoría
+      <input id="pCategoria" list="listaCategorias" required placeholder="Ej: Collares">
+    </label>
+    <datalist id="listaCategorias"></datalist>
+    <div class="acciones">
+      <label>Precio (COP)
+        <input id="pPrecio" type="number" min="0" step="1" required>
+      </label>
+      <label>Stock
+        <input id="pStock" type="number" min="0" step="1" required>
+      </label>
+    </div>
+    <label>Foto del producto
+      <input id="pImg" type="file" accept="image/*">
+    </label>
+    <img id="pVista" class="vista" alt="Vista previa" hidden>
+    <label class="check"><input type="checkbox" id="pFoto"> La clienta sube su foto (se recorta en corazón)</label>
+    <div class="acciones">
+      <button type="button" class="btn-sec" id="cancelarProducto">Cancelar</button>
+      <button type="submit" class="btn">Guardar</button>
+    </div>
+    <button type="button" class="vaciar peligro" id="eliminarProducto">Eliminar producto</button>
+  </form>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Logo de Louze (corona dorada, fondo transparente)
+const LOGO = "data:image/webp;base64,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";
+
+// ================== DATOS INICIALES ==================
+// Se usan solo la primera vez. Después todo se cambia desde "Acceso emprendedor".
+const DATOS_INICIALES = {
+  tienda: {
+    nombre: "Louze",
+    whatsapp: "584128950580",   // 0412-8950580 en formato internacional
+    instagram: "https://www.instagram.com/louze_sc",
+    tiktok: "https://www.tiktok.com/@louze_sc",
+    retiro: true,               // ofrecer retiro en persona
+    puntoRetiro: "Gimnasio El Edén, Barrio Obrero",
+    horarioRetiro: "Lunes a viernes, 5:30 p. m.",
+    pin: "1234",                // clave del panel (cámbiala desde el panel)
+  },
+  // Tasas del día: cuántos pesos vale 1 dólar y 1 bolívar (null = sin definir)
+  // Bolívares: pesos ÷ tasa, redondeado (ej. 10.000 COP ÷ 2,9 = Bs 3.448)
+  tasas: { usd: null, bs: 2.9 },
+  // moneda: "COP" pesos, "USD" dólares, "Bs" bolívares
+  // datos: una línea por dato, con el formato "Nombre del dato: valor"
+  // referencia: qué comprobante se le pide a la clienta ("" = no pide ninguno, como en efectivo)
+  pagos: [
+    { nombre: "Pago móvil", moneda: "Bs",
+      datos: "Banco: Banco de Venezuela\nTeléfono: 0414-9762446\nCédula: 31.481.171",
+      referencia: "Número de referencia" },
+    { nombre: "Bancolombia", moneda: "COP",
+      datos: "Cuenta de ahorros: 629-895073-17\nTitular: Norelys Duitama\nCédula: 1.232.396.413",
+      referencia: "Número de comprobante" },
+    { nombre: "Binance", moneda: "USD",
+      datos: "Correo: Luisana.chacon27@gmail.com",
+      referencia: "ID de la orden" },
+    { nombre: "Efectivo", moneda: "COP", datos: "", referencia: "" },
+    { nombre: "Efectivo", moneda: "USD", datos: "", referencia: "" },
+  ],
+  // Precios en pesos colombianos. precio: null = el delivery se acuerda por WhatsApp
+  zonas: [
+    { nombre: "Abejal de Palmira", precio: 15000 },
+    { nombre: "Alcabala Mirador", precio: 7000 },
+    { nombre: "Arjona", precio: 15000 },
+    { nombre: "Av. Ferrero Tamayo", precio: 10000 },
+    { nombre: "Av. Libertador", precio: 7000 },
+    { nombre: "Barrancas", precio: 5000 },
+    { nombre: "Barrio Bolívar", precio: 10000 },
+    { nombre: "Barrio El Río", precio: 10000 },
+    { nombre: "Barrio Obrero", precio: 10000 },
+    { nombre: "Barrio Sucre", precio: 15000 },
+    { nombre: "Caneyes", precio: 12000 },
+    { nombre: "Capachito", precio: 20000 },
+    { nombre: "Capacho", precio: 30000 },
+    { nombre: "Centro", precio: 8000 },
+    { nombre: "Copa de Oro", precio: 18000 },
+    { nombre: "Cordero", precio: 25000 },
+    { nombre: "Cueva del Oso", precio: 15000 },
+    { nombre: "El Diamante", precio: 12000 },
+    { nombre: "El Llanito", precio: 20000 },
+    { nombre: "El Pueblito", precio: 20000 },
+    { nombre: "El Tope", precio: 15000 },
+    { nombre: "El Valle", precio: 15000 },
+    { nombre: "Hospital Central", precio: 12000 },
+    { nombre: "Junco Páramo", precio: 20000 },
+    { nombre: "La 14 de Táriba", precio: 10000 },
+    { nombre: "La Alianza", precio: 15000 },
+    { nombre: "La Castra", precio: 12000 },
+    { nombre: "La Concordia", precio: 10000 },
+    { nombre: "La Ermita", precio: 8000 },
+    { nombre: "La Guayana", precio: 10000 },
+    { nombre: "La Playa", precio: 12000 },
+    { nombre: "La Policlínica", precio: 12000 },
+    { nombre: "La ULA", precio: 12000 },
+    { nombre: "Lagunillas", precio: 15000 },
+    { nombre: "Las Acacias", precio: 12000 },
+    { nombre: "Las Lomas", precio: 7000 },
+    { nombre: "Las Vegas de Táriba", precio: 10000 },
+    { nombre: "Marco Tulio", precio: 15000 },
+    { nombre: "Palo Gordo", precio: 15000 },
+    { nombre: "Pan de Azúcar", precio: 15000 },
+    { nombre: "Patiecitos, Palmira", precio: 12000 },
+    { nombre: "Pirineos I", precio: 12000 },
+    { nombre: "Pirineos II", precio: 15000 },
+    { nombre: "Pueblo Nuevo", precio: 12000 },
+    { nombre: "Puente Real", precio: 8000 },
+    { nombre: "Riveras", precio: 7000 },
+    { nombre: "Rómulo", precio: 12000 },
+    { nombre: "San Rafael", precio: 20000 },
+    { nombre: "Santa Cecilia", precio: 12000 },
+    { nombre: "Santa Eduviges", precio: 12000 },
+    { nombre: "Santa Elena", precio: 10000 },
+    { nombre: "Santa Teresa", precio: 10000 },
+    { nombre: "Táriba", precio: 7000 },
+    { nombre: "Unidad Vecinal", precio: 12000 },
+    { nombre: "Urb. Mérida", precio: 12000 },
+    { nombre: "Zona Industrial Paramillo", precio: 12000 },
+    { nombre: "Zorca Providencia", precio: 10000 },
+    { nombre: "Zorca San Isidro", precio: 15000 },
+    { nombre: "Otra zona", precio: null },
+  ],
+  // foto: true = la clienta sube una foto que se recorta en forma de corazón
+  productos: [
+    { id: 1,  nombre: "Collar corazón",           categoria: "Collares",   precio: 35000, stock: 10, img: "" },
+    { id: 2,  nombre: "Collar con inicial",       categoria: "Collares",   precio: 40000, stock: 6,  img: "" },
+    { id: 3,  nombre: "Pulsera de eslabones",     categoria: "Pulseras",   precio: 30000, stock: 8,  img: "" },
+    { id: 4,  nombre: "Pulsera tejida",           categoria: "Pulseras",   precio: 25000, stock: 0,  img: "" },
+    { id: 5,  nombre: "Anillo liso",              categoria: "Anillos",    precio: 20000, stock: 12, img: "" },
+    { id: 6,  nombre: "Anillo con circón",        categoria: "Anillos",    precio: 28000, stock: 3,  img: "" },
+    { id: 7,  nombre: "Aretes de argolla",        categoria: "Aretes",     precio: 22000, stock: 15, img: "" },
+    { id: 8,  nombre: "Aretes estrella",          categoria: "Aretes",     precio: 18000, stock: 2,  img: "" },
+    { id: 9,  nombre: "Relicario corazón",        categoria: "Relicarios", precio: 55000, stock: 5,  img: "", foto: true },
+    { id: 10, nombre: "Relicario corazón grande", categoria: "Relicarios", precio: 65000, stock: 3,  img: "", foto: true },
+  ],
+};
+
+// ---------- Guardado (por ahora en este navegador; después se conecta a Firebase) ----------
+const CLAVE = "louze-datos-v2";   // v2: zonas reales de entrega
+
+function cargarDatos() {
+  const base = JSON.parse(JSON.stringify(DATOS_INICIALES));
+  try {
+    const guardado = JSON.parse(localStorage.getItem(CLAVE));
+    if (guardado) {
+      const d = { ...base, ...guardado, tienda: { ...base.tienda, ...guardado.tienda }, tasas: {
+        usd: guardado.tasas?.usd ?? base.tasas.usd,
+        bs: guardado.tasas?.bs ?? base.tasas.bs,
+      } };
+      if (!d.pagos.length || typeof d.pagos[0] === "string") d.pagos = base.pagos;   // formato anterior
+      d.pagos.forEach(m => {   // métodos guardados antes de tener datos de pago
+        const igual = base.pagos.find(b => b.nombre === m.nombre && b.moneda === m.moneda);
+        if (m.datos === undefined) m.datos = igual?.datos || "";
+        if (m.referencia === undefined) m.referencia = igual?.referencia || "";
+      });
+      return d;
+    }
+  } catch (e) {}
+  return base;
+}
+
+function guardarDatos() {
+  try {
+    localStorage.setItem(CLAVE, JSON.stringify(datos));
+    return true;
+  } catch (e) {
+    if (e.name === "QuotaExceededError") {
+      aviso("No hay espacio para guardar. Usa fotos más livianas.");
+      return false;
+    }
+    return true;   // vista previa sin guardado: los cambios se ven, pero se pierden al recargar
+  }
+}
+
+// Envía un formulario aunque la página esté dentro de una vista previa que bloquea formularios
+function alEnviar(form, accion) {
+  form.addEventListener("submit", e => { e.preventDefault(); accion(); });
+  form.querySelector("[type=submit]").addEventListener("click", e => {
+    e.preventDefault();
+    if (form.reportValidity()) accion();
+  });
+}
+
+let datos = cargarDatos();
+
+// ---------- Utilidades ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const prod = id => datos.productos.find(p => p.id === id);
+const pesos = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const dinero = n => pesos.format(n);
+let carrito = [];        // { key, id, cant, foto }
+let categoria = "Todos";
+let siguienteKey = 1;
+
+const enCarrito = id => carrito.filter(l => l.id === id).reduce((s, l) => s + l.cant, 0);
+const disponible = id => prod(id).stock - enCarrito(id);
+
+// ---------- Monedas ----------
+const MONEDAS = { COP: "pesos", USD: "dólares", Bs: "bolívares" };
+const dosDecimales = n => n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const numeroVE = n => n.toLocaleString("es-VE");                 // 2.9 → "2,9"
+// Acepta "2,9", "2.9", "4000" o "4.000" (punto de miles)
+function leerNumero(texto) {
+  let t = String(texto).trim();
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, "");
+  return parseFloat(t.replace(",", "."));
+}
+const pagoElegido = () => datos.pagos[$("#pago").value] || { nombre: "A convenir", moneda: "COP" };
+
+// Pasa un monto en pesos a la moneda del pago. Devuelve null si falta la tasa.
+function convertir(cop, moneda) {
+  if (moneda === "COP") return dinero(cop);
+  if (moneda === "Bs") {
+    if (!datos.tasas.bs) return null;
+    return "Bs " + numeroVE(Math.round(cop / datos.tasas.bs));   // pesos ÷ tasa, redondeado
+  }
+  if (!datos.tasas.usd) return null;
+  return "USD " + dosDecimales(Math.ceil(cop / datos.tasas.usd * 100) / 100);   // hacia arriba al céntimo
+}
+
+// Saca el enlace de un texto compartido desde Google Maps
+const extraerEnlace = texto => (texto.match(/https?:\/\/\S+/) || [""])[0];
+
+// Convierte 0412-895.05.80 en 584128950580
+function normalizarWsp(v) {
+  v = v.replace(/\D/g, "");
+  return v.startsWith("0") ? "58" + v.slice(1) : v;
+}
+
+function aviso(texto) {
+  const t = $("#toast");
+  t.textContent = texto;
+  t.classList.add("on");
+  clearTimeout(aviso.timer);
+  aviso.timer = setTimeout(() => t.classList.remove("on"), 2200);
+}
+
+function reducirImagen(archivo, lado = 700) {
+  return new Promise((ok, mal) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, lado / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k);
+      c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      ok(c.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = mal;
+    img.src = URL.createObjectURL(archivo);
+  });
+}
+
+// ---------- Catálogo ----------
+function renderChips() {
+  const cats = ["Todos", ...new Set(datos.productos.map(p => p.categoria))];
+  if (!cats.includes(categoria)) categoria = "Todos";
+  $("#chips").innerHTML = cats.map(c =>
+    `<button class="chip ${c === categoria ? "activo" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+}
+
+function renderCatalogo() {
+  const q = $("#buscar").value.trim().toLowerCase();
+  const lista = datos.productos.filter(p =>
+    (categoria === "Todos" || p.categoria === categoria) && p.nombre.toLowerCase().includes(q));
+
+  $("#catalogo").innerHTML = lista.map(p => {
+    let etiqueta = "", boton;
+    if (p.stock <= 0) {
+      etiqueta = `<span class="etiqueta agotado">Agotado</span>`;
+      boton = `<button class="agregar" disabled>Agotado</button>`;
+    } else {
+      if (p.stock <= 3) etiqueta = `<span class="etiqueta poco">Quedan ${p.stock}</span>`;
+      boton = disponible(p.id) <= 0
+        ? `<button class="agregar" disabled>Ya tienes todas</button>`
+        : `<button class="agregar" data-add="${p.id}">${p.foto ? "Personalizar" : "Agregar"}</button>`;
+    }
+    const imagen = p.img ? `<img src="${esc(p.img)}" alt="${esc(p.nombre)}" loading="lazy">` : `<span class="cat">${esc(p.categoria)}</span>`;
+    const personal = p.foto ? `<span class="etiqueta personal">Con tu foto</span>` : "";
+    return `<article class="card ${p.stock <= 0 ? "sin-stock" : ""}">
+      <div class="foto">${imagen}${etiqueta}${personal}</div>
+      <div class="info">
+        <span class="nombre">${esc(p.nombre)}</span>
+        <span class="precio">${dinero(p.precio)}</span>
+        ${boton}
+      </div>
+    </article>`;
+  }).join("") || `<p class="vacio">No hay productos con ese nombre. Prueba con otra palabra.</p>`;
+}
+
+// ---------- Carrito ----------
+function agregar(id, foto = null) {
+  if (disponible(id) <= 0) return aviso("No quedan más unidades");
+  const linea = !foto && carrito.find(l => l.id === id && !l.foto);
+  if (linea) linea.cant++;
+  else carrito.push({ key: siguienteKey++, id, cant: 1, foto });
+  actualizar();
+  aviso("Agregado al carrito");
+}
+
+function zonaElegida() {
+  const v = $("#zona").value;
+  if (v === "r") return { nombre: "Punto de encuentro", precio: 0, retiro: true };
+  return datos.zonas[v];   // undefined si aún no eligió
+}
+
+function totales() {
+  const subtotal = carrito.reduce((s, l) => s + prod(l.id).precio * l.cant, 0);
+  const zona = zonaElegida();
+  return { subtotal, zona, total: subtotal + (zona?.precio || 0) };
+}
+
+function renderOpcionesPedido() {
+  const precioZona = z => z.precio === null ? " (a convenir)" : z.precio === 0 ? " (gratis)" : ` (${dinero(z.precio)})`;
+  // Zonas en orden alfabético; las que se acuerdan por WhatsApp van al final
+  const orden = datos.zonas.map((z, i) => ({ z, i }))
+    .sort((a, b) => (a.z.precio === null) - (b.z.precio === null) || a.z.nombre.localeCompare(b.z.nombre, "es"));
+  $("#zona").innerHTML = `<option value="" disabled selected>Elige cómo recibirlo</option>` +
+    (datos.tienda.retiro ? `<option value="r">Punto de encuentro (gratis)</option>` : "") +
+    `<optgroup label="Delivery a domicilio">` +
+    orden.map(({ z, i }) => `<option value="${i}">${esc(z.nombre)}${precioZona(z)}</option>`).join("") +
+    `</optgroup>`;
+  $("#pago").innerHTML = datos.pagos.length
+    ? datos.pagos.map((m, i) => `<option value="${i}">${esc(m.nombre)} (${MONEDAS[m.moneda]})</option>`).join("")
+    : `<option value="">A convenir</option>`;
+}
+
+function renderCarrito() {
+  $("#contador").textContent = carrito.reduce((s, l) => s + l.cant, 0);
+  $("#formPedido").hidden = !carrito.length;
+  let f = 0;
+  $("#items").innerHTML = carrito.length ? carrito.map(l => {
+    const p = prod(l.id);
+    const mini = l.foto ? `<img class="mini corazon" src="${l.foto}" alt="Foto del relicario">`
+      : p.img ? `<img class="mini" src="${esc(p.img)}" alt="">` : `<div class="mini"></div>`;
+    const controles = l.foto
+      ? `<button class="quitar" data-quitar="${l.key}">Quitar</button>`
+      : `<div class="cant">
+           <button data-menos="${l.key}" aria-label="Quitar uno">−</button>
+           <span>${l.cant}</span>
+           <button data-mas="${l.key}" aria-label="Agregar uno" ${disponible(p.id) <= 0 ? "disabled" : ""}>+</button>
+         </div>`;
+    return `<div class="item">${mini}
+      <div class="item-info">
+        <div class="nombre">${esc(p.nombre)}</div>
+        <small>${dinero(p.precio * l.cant)}${l.foto ? ` (foto #${++f})` : ""}</small>
+      </div>${controles}</div>`;
+  }).join("") : `<p class="vacio">Tu carrito está vacío. Agrega algo del catálogo.</p>`;
+
+  const { subtotal, zona, total } = totales();
+  $("#campoDir").hidden = !!zona?.retiro;
+  $("#infoRetiro").hidden = !zona?.retiro;
+  $("#infoRetiro").textContent = `Retiras tu pedido en ${datos.tienda.puntoRetiro}. Horario: ${datos.tienda.horarioRetiro}`;
+  $("#subtotal").textContent = dinero(subtotal);
+  $("#costoDelivery").textContent = !zona ? "Elige la zona"
+    : zona.precio === null ? "A convenir" : zona.precio === 0 ? "Gratis" : dinero(zona.precio);
+  const masDelivery = zona && zona.precio === null ? " + delivery" : "";
+  $("#total").textContent = dinero(total) + masDelivery;
+
+  const pago = pagoElegido();
+  $("#filaPagar").hidden = pago.moneda === "COP";
+  $("#etqPagar").textContent = `A pagar en ${MONEDAS[pago.moneda]}`;
+  $("#montoPagar").textContent = (convertir(total, pago.moneda) || "Tasa por confirmar") + masDelivery;
+  renderDatosPago(pago);
+}
+
+// Muestra a dónde pagar según el método elegido, con botón para copiar cada dato
+function renderDatosPago(pago) {
+  const lineas = (pago.datos || "").split("\n").map(l => l.trim()).filter(Boolean);
+  $("#datosPago").hidden = !lineas.length;
+  $("#datosPago").innerHTML = `<h4>Datos para pagar por ${esc(pago.nombre)}</h4>` + lineas.map(l => {
+    const [etiqueta, ...resto] = l.split(":");
+    const valor = resto.length ? resto.join(":").trim() : etiqueta.trim();
+    return `<div class="dato">
+      <div>${resto.length ? `<small>${esc(etiqueta.trim())}</small>` : ""}${esc(valor)}</div>
+      <button type="button" class="copiar" data-copiar="${esc(valor)}">Copiar</button>
+    </div>`;
+  }).join("") + `<p class="sub">${pago.referencia
+    ? `Al pagar, escribe el ${esc(pago.referencia.toLowerCase())} aquí abajo y envía la captura por WhatsApp.`
+    : "Envía el comprobante de pago por WhatsApp."}</p>`;
+  $("#campoRef").hidden = !pago.referencia;
+  $("#etqRef").textContent = `${pago.referencia} (opcional si aún no pagas)`;
+}
+
+async function copiar(texto) {
+  // números de cuenta, cédulas y teléfonos se copian solo con dígitos
+  if (/^[\d\s.\-]+$/.test(texto)) texto = texto.replace(/\D/g, "");
+  try {
+    await navigator.clipboard.writeText(texto);
+  } catch {
+    const t = document.createElement("textarea");
+    t.value = texto;
+    document.body.appendChild(t);
+    t.select();
+    const ok = document.execCommand("copy");
+    t.remove();
+    if (!ok) return aviso("No se pudo copiar. Mantén presionado el dato para copiarlo.");
+  }
+  aviso("Copiado: " + texto);
+}
+
+$("#datosPago").addEventListener("click", e => {
+  const b = e.target.closest("[data-copiar]");
+  if (b) copiar(b.dataset.copiar);
+});
+
+function actualizar() { renderCatalogo(); renderCarrito(); }
+
+function renderTodo() {
+  const t = datos.tienda;
+  $("#marca").textContent = t.nombre;
+  document.title = t.nombre;
+  $("#pie").textContent = `${t.nombre}, accesorios de acero inoxidable`;
+  $("#redes").innerHTML = [["Instagram", t.instagram], ["TikTok", t.tiktok]]
+    .filter(([, url]) => url)
+    .map(([red, url]) => `<a class="red" href="${esc(url)}" target="_blank" rel="noopener">${red}</a>`).join("");
+  $("#btnWsp").href = `https://wa.me/${t.whatsapp}?text=${encodeURIComponent(`¡Hola ${t.nombre}! Quiero información sobre sus accesorios.`)}`;
+  renderChips();
+  renderOpcionesPedido();
+  actualizar();
+}
+
+function abrirCarrito(on) {
+  $("#carrito").classList.toggle("on", on);
+  $("#capa").classList.toggle("on", on);
+  document.body.style.overflow = on ? "hidden" : "";
+}
+
+// ---------- Pedido por WhatsApp ----------
+function mensajePedido() {
+  const { subtotal, zona, total } = totales();
+  const cop = n => `${n.toLocaleString("es-CO")} COP`;   // en el mensaje, montos en pesos con "COP" para que no se confundan con dólares
+  let f = 0;
+  const lineas = carrito.map(l => {
+    const p = prod(l.id);
+    return `• ${l.cant} x ${p.nombre}${l.foto ? ` (con foto #${++f})` : ""}: ${cop(p.precio * l.cant)}`;
+  });
+  const envio = zona.precio === null
+    ? "a convenir (se cobra en pesos colombianos)"
+    : `${cop(zona.precio)} (tarifa fija en pesos colombianos)`;
+  const masDelivery = zona.precio === null ? " + delivery" : "";
+  const pago = pagoElegido();
+  const referencia = $("#direccion").value.trim();
+  let lineaMonto = [];
+  if (pago.moneda !== "COP") {
+    const monto = convertir(total, pago.moneda);
+    const tasa = pago.moneda === "USD"
+      ? `1 dólar = ${datos.tasas.usd?.toLocaleString("es-CO")} pesos`
+      : numeroVE(datos.tasas.bs || 0);
+    lineaMonto = [monto
+      ? `*A pagar en ${MONEDAS[pago.moneda]}: ${monto}${masDelivery}* (tasa: ${tasa})`
+      : `A pagar en ${MONEDAS[pago.moneda]}: por confirmar`];
+  }
+  return [
+    `¡Hola! Quiero hacer este pedido en ${datos.tienda.nombre}:`,
+    "",
+    ...lineas,
+    "",
+    `Subtotal: ${cop(subtotal)}`,
+    zona.retiro
+      ? `Entrega: retiro en el punto de encuentro, ${datos.tienda.puntoRetiro} (${datos.tienda.horarioRetiro})`
+      : `Delivery (${zona.nombre}): ${envio}`,
+    `*Total: ${cop(total)}${masDelivery}*`,
+    `Pago: ${pago.nombre} (${MONEDAS[pago.moneda]})`,
+    ...lineaMonto,
+    ...(pago.referencia
+      ? [`${pago.referencia}: ${$("#referencia").value.trim() || "pendiente, lo envío al pagar"}`]
+      : []),
+    "",
+    `Nombre: ${$("#nombre").value.trim()}`,
+    ...(zona.retiro ? [] : [`Ubicación: ${$("#ubicacion").value.trim()}`]),
+    ...(!zona.retiro && referencia ? [`Referencia: ${referencia}`] : []),
+    ...(f ? ["", `Te envío ${f > 1 ? "las fotos" : "la foto"} del relicario en el siguiente mensaje.`] : []),
+  ].join("\n");
+}
+
+async function compartirFoto(dataURL, nombreArchivo) {
+  try {
+    const blob = await (await fetch(dataURL)).blob();
+    const archivo = new File([blob], nombreArchivo, { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+      await navigator.share({ files: [archivo] });
+      return;
+    }
+  } catch (e) {
+    if (e.name === "AbortError") return;
+  }
+  const a = document.createElement("a");   // si no se puede compartir, se descarga
+  a.href = dataURL;
+  a.download = nombreArchivo;
+  a.click();
+}
+
+// ---------- Editor de foto en corazón ----------
+const lienzo = $("#lienzo"), ctx = lienzo.getContext("2d"), S = lienzo.width;
+let editor = { id: null, img: null, zoom: 1, x: 0, y: 0 };
+let arrastre = null;
+
+function trazarCorazon(c) {
+  const k = S * 0.92 / 110;
+  c.save();
+  c.translate(S / 2, S / 2); c.scale(k, k); c.translate(-75, -72.5);
+  c.beginPath();
+  c.moveTo(75, 40);
+  c.bezierCurveTo(75, 37, 70, 25, 50, 25);
+  c.bezierCurveTo(20, 25, 20, 62.5, 20, 62.5);
+  c.bezierCurveTo(20, 80, 40, 102, 75, 120);
+  c.bezierCurveTo(110, 102, 130, 80, 130, 62.5);
+  c.bezierCurveTo(130, 62.5, 130, 25, 100, 25);
+  c.bezierCurveTo(85, 25, 75, 37, 75, 40);
+  c.closePath();
+  c.restore();
+}
+
+function dibujar(c, guia) {
+  const { img, zoom, x, y } = editor;
+  c.clearRect(0, 0, S, S);
+  if (!img) {
+    trazarCorazon(c); c.fillStyle = "#560c18"; c.fill();
+    c.fillStyle = "#e3c996"; c.font = "600 28px Manrope, sans-serif"; c.textAlign = "center";
+    c.fillText("Tu foto aquí", S / 2, S / 2);
+    return;
+  }
+  const k = Math.max(S / img.width, S / img.height) * zoom;
+  const w = img.width * k, h = img.height * k;
+  const px = (S - w) / 2 + x, py = (S - h) / 2 + y;
+  if (guia) { c.globalAlpha = 0.2; c.drawImage(img, px, py, w, h); c.globalAlpha = 1; }
+  c.save(); trazarCorazon(c); c.clip(); c.drawImage(img, px, py, w, h); c.restore();
+  if (guia) { trazarCorazon(c); c.lineWidth = 3; c.strokeStyle = "rgba(227,201,150,.85)"; c.stroke(); }
+}
+
+function limitar() {
+  const { img, zoom } = editor;
+  const k = Math.max(S / img.width, S / img.height) * zoom;
+  const mx = (img.width * k - S) / 2, my = (img.height * k - S) / 2;
+  editor.x = Math.max(-mx, Math.min(mx, editor.x));
+  editor.y = Math.max(-my, Math.min(my, editor.y));
+}
+
+function abrirEditor(id) {
+  editor = { id, img: null, zoom: 1, x: 0, y: 0 };
+  $("#inputFoto").value = "";
+  $("#zoom").value = 1;
+  $("#zoom").disabled = true;
+  $("#confirmarFoto").disabled = true;
+  dibujar(ctx, true);
+  $("#modalFoto").hidden = false;
+}
+
+$("#inputFoto").addEventListener("change", e => {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+  const img = new Image();
+  img.onload = () => {
+    Object.assign(editor, { img, zoom: 1, x: 0, y: 0 });
+    $("#zoom").value = 1;
+    $("#zoom").disabled = false;
+    $("#confirmarFoto").disabled = false;
+    dibujar(ctx, true);
+  };
+  img.onerror = () => aviso("No se pudo abrir esa imagen. Prueba con otra foto.");
+  img.src = URL.createObjectURL(archivo);
+});
+
+$("#zoom").addEventListener("input", e => { editor.zoom = +e.target.value; limitar(); dibujar(ctx, true); });
+
+lienzo.addEventListener("pointerdown", e => {
+  if (!editor.img) return;
+  arrastre = { x: e.clientX, y: e.clientY };
+  lienzo.setPointerCapture(e.pointerId);
+});
+lienzo.addEventListener("pointermove", e => {
+  if (!arrastre) return;
+  const f = S / lienzo.getBoundingClientRect().width;
+  editor.x += (e.clientX - arrastre.x) * f;
+  editor.y += (e.clientY - arrastre.y) * f;
+  arrastre = { x: e.clientX, y: e.clientY };
+  limitar(); dibujar(ctx, true);
+});
+lienzo.addEventListener("pointerup", () => arrastre = null);
+lienzo.addEventListener("pointercancel", () => arrastre = null);
+
+$("#cancelarFoto").onclick = () => $("#modalFoto").hidden = true;
+$("#confirmarFoto").onclick = () => {
+  const salida = document.createElement("canvas");
+  salida.width = salida.height = S;
+  dibujar(salida.getContext("2d"), false);
+  agregar(editor.id, salida.toDataURL("image/png"));
+  $("#modalFoto").hidden = true;
+};
+
+// ---------- Eventos de la tienda ----------
+$("#catalogo").addEventListener("click", e => {
+  const b = e.target.closest("[data-add]");
+  if (!b) return;
+  const p = prod(+b.dataset.add);
+  p.foto ? abrirEditor(p.id) : agregar(p.id);
+});
+
+$("#chips").addEventListener("click", e => {
+  const b = e.target.closest("[data-cat]");
+  if (!b) return;
+  categoria = b.dataset.cat;
+  renderChips();
+  renderCatalogo();
+});
+
+$("#buscar").addEventListener("input", renderCatalogo);
+
+$("#items").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const l = carrito.find(x => x.key === +(b.dataset.mas || b.dataset.menos || b.dataset.quitar));
+  if (!l) return;
+  if (b.dataset.mas && disponible(l.id) > 0) l.cant++;
+  if (b.dataset.menos) l.cant--;
+  if (b.dataset.quitar) l.cant = 0;
+  carrito = carrito.filter(x => x.cant > 0);
+  actualizar();
+});
+
+$("#abrirCarrito").onclick = () => abrirCarrito(true);
+$("#cerrarCarrito").onclick = () => abrirCarrito(false);
+$("#capa").onclick = () => abrirCarrito(false);
+$("#zona").addEventListener("change", renderCarrito);
+$("#pago").addEventListener("change", () => {
+  $("#referencia").value = "";   // cada método tiene su propio comprobante
+  renderCarrito();
+});
+
+// Ubicación de entrega
+function mostrarMapa() {
+  const enlace = $("#ubicacion").value.trim();
+  $("#verMapa").hidden = !enlace;
+  $("#verMapa").href = enlace || "#";
+}
+
+$("#ubicacion").addEventListener("change", e => {
+  const texto = e.target.value.trim();
+  const enlace = extraerEnlace(texto);
+  if (texto && !enlace) aviso("Eso no parece un enlace. Cópialo desde Google Maps.");
+  e.target.value = enlace;
+  mostrarMapa();
+});
+
+$("#miUbicacion").onclick = () => {
+  const boton = $("#miUbicacion");
+  if (!navigator.geolocation) return aviso("Tu navegador no permite compartir ubicación. Pega el enlace de Google Maps.");
+  boton.textContent = "Buscando tu ubicación…";
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude, longitude } = pos.coords;
+    $("#ubicacion").value = `https://www.google.com/maps?q=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+    boton.textContent = "Usar mi ubicación actual";
+    mostrarMapa();
+    aviso("Ubicación agregada");
+  }, () => {
+    boton.textContent = "Usar mi ubicación actual";
+    aviso("No se pudo obtener tu ubicación. Pega el enlace de Google Maps.");
+  }, { enableHighAccuracy: true, timeout: 15000 });
+};
+$("#vaciar").onclick = () => { carrito = []; actualizar(); };
+
+alEnviar($("#formPedido"), () => {
+  const { zona } = totales();
+  if (!zona.retiro && !$("#ubicacion").value.trim()) {
+    $("#ubicacion").focus();
+    return aviso("Comparte tu ubicación o pega el enlace de Google Maps");
+  }
+  const url = `https://wa.me/${datos.tienda.whatsapp}?text=${encodeURIComponent(mensajePedido())}`;
+  const fotos = carrito.filter(l => l.foto);
+  if (!fotos.length) return window.open(url, "_blank");
+
+  $("#irWhatsapp").onclick = () => window.open(url, "_blank");
+  $("#listaFotos").innerHTML = fotos.map((l, i) => `
+    <div class="paso">
+      <img src="${l.foto}" alt="">
+      <button class="btn-sec" data-foto="${i}">2. Compartir foto${fotos.length > 1 ? " #" + (i + 1) : ""}</button>
+    </div>`).join("");
+  $("#listaFotos").onclick = ev => {
+    const b = ev.target.closest("[data-foto]");
+    if (b) compartirFoto(fotos[+b.dataset.foto].foto, `relicario-${+b.dataset.foto + 1}.png`);
+  };
+  $("#modalEnvio").hidden = false;
+});
+$("#cerrarEnvio").onclick = () => $("#modalEnvio").hidden = true;
+
+// ---------- Acceso emprendedor ----------
+function pedirClave() {
+  $("#pin").value = "";
+  $("#modalPin").hidden = false;
+  $("#pin").focus();
+}
+
+$("#entrarAdmin").onclick = pedirClave;
+$("#cancelarPin").onclick = () => $("#modalPin").hidden = true;
+
+alEnviar($("#formPin"), () => {
+  if ($("#pin").value !== datos.tienda.pin) return aviso("Clave incorrecta");
+  $("#modalPin").hidden = true;
+  abrirCarrito(false);
+  renderAdminProductos();
+  renderAdminZonas();
+  renderAdminPagos();
+  llenarConfig();
+  $("#panelAdmin").hidden = false;
+  document.body.style.overflow = "hidden";
+});
+
+$("#salirAdmin").onclick = () => {
+  $("#panelAdmin").hidden = true;
+  document.body.style.overflow = "";
+  carrito = carrito.filter(l => prod(l.id));   // quita del carrito lo que se haya eliminado
+  renderTodo();
+};
+
+$("#tabsAdmin").addEventListener("click", e => {
+  const b = e.target.closest("[data-tab]");
+  if (!b) return;
+  document.querySelectorAll("#tabsAdmin .chip").forEach(c => c.classList.toggle("activo", c === b));
+  ["tabProductos", "tabDelivery", "tabPagos", "tabTienda"].forEach(id => $("#" + id).hidden = id !== b.dataset.tab);
+});
+
+// Productos e inventario
+function renderAdminProductos() {
+  $("#listaAdmin").innerHTML = datos.productos.map(p => `
+    <div class="fila-admin">
+      ${p.img ? `<img class="mini" src="${esc(p.img)}" alt="">` : `<div class="mini"></div>`}
+      <div class="item-info">
+        <div class="nombre">${esc(p.nombre)}</div>
+        <small>${dinero(p.precio)}, ${esc(p.categoria)}${p.foto ? ", con foto" : ""}</small>
+      </div>
+      <div class="cant">
+        <button data-stock="-1" data-id="${p.id}" aria-label="Restar stock">−</button>
+        <span>${p.stock}</span>
+        <button data-stock="1" data-id="${p.id}" aria-label="Sumar stock">+</button>
+      </div>
+      <button class="quitar" data-editar="${p.id}">Editar</button>
+    </div>`).join("") || `<p class="vacio">Aún no hay productos. Crea el primero.</p>`;
+}
+
+$("#listaAdmin").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.editar) return editarProducto(+b.dataset.editar);
+  const p = prod(+b.dataset.id);
+  p.stock = Math.max(0, p.stock + +b.dataset.stock);
+  guardarDatos();
+  renderAdminProductos();
+});
+
+let editando = null, imgNueva = null;
+
+function editarProducto(id) {
+  const p = id ? prod(id) : null;
+  editando = id;
+  imgNueva = null;
+  $("#tituloProducto").textContent = p ? "Editar producto" : "Nuevo producto";
+  $("#pNombre").value = p?.nombre || "";
+  $("#pCategoria").value = p?.categoria || "";
+  $("#pPrecio").value = p?.precio ?? "";
+  $("#pStock").value = p?.stock ?? "";
+  $("#pFoto").checked = !!p?.foto;
+  $("#pImg").value = "";
+  $("#pVista").src = p?.img || "";
+  $("#pVista").hidden = !p?.img;
+  $("#eliminarProducto").hidden = !p;
+  $("#listaCategorias").innerHTML = [...new Set(datos.productos.map(x => x.categoria))]
+    .map(c => `<option value="${esc(c)}">`).join("");
+  $("#modalProducto").hidden = false;
+}
+
+$("#nuevoProducto").onclick = () => editarProducto(null);
+$("#cancelarProducto").onclick = () => $("#modalProducto").hidden = true;
+
+$("#pImg").addEventListener("change", async e => {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+  try {
+    imgNueva = await reducirImagen(archivo);
+    $("#pVista").src = imgNueva;
+    $("#pVista").hidden = false;
+  } catch {
+    aviso("No se pudo abrir esa imagen. Prueba con otra foto.");
+  }
+});
+
+alEnviar($("#formProducto"), () => {
+  const valores = {
+    nombre: $("#pNombre").value.trim(),
+    categoria: $("#pCategoria").value.trim(),
+    precio: Math.max(0, Math.round(+$("#pPrecio").value)),
+    stock: Math.max(0, Math.floor(+$("#pStock").value)),
+    foto: $("#pFoto").checked,
+  };
+  if (imgNueva) valores.img = imgNueva;
+  if (editando) Object.assign(prod(editando), valores);
+  else datos.productos.push({ id: Math.max(0, ...datos.productos.map(p => p.id)) + 1, img: "", ...valores });
+  if (!guardarDatos()) return;
+  $("#modalProducto").hidden = true;
+  renderAdminProductos();
+  aviso("Producto guardado");
+});
+
+$("#eliminarProducto").onclick = () => {
+  if (!confirm("¿Eliminar este producto de la tienda?")) return;
+  datos.productos = datos.productos.filter(p => p.id !== editando);
+  guardarDatos();
+  $("#modalProducto").hidden = true;
+  renderAdminProductos();
+  aviso("Producto eliminado");
+};
+
+// Zonas de delivery
+function renderAdminZonas() {
+  $("#listaZonas").innerHTML = datos.zonas.map((z, i) => `
+    <div class="fila-admin">
+      <input data-zona="${i}" data-campo="nombre" value="${esc(z.nombre)}" aria-label="Nombre de la zona" style="flex:2">
+      <input data-zona="${i}" data-campo="precio" type="number" min="0" step="1" value="${z.precio ?? ""}" placeholder="A convenir" aria-label="Precio del delivery" style="flex:1">
+      <button class="quitar peligro" data-borrar="${i}">Borrar</button>
+    </div>`).join("") || `<p class="vacio">No hay zonas. Agrega la primera.</p>`;
+}
+
+$("#listaZonas").addEventListener("change", e => {
+  const i = e.target.dataset.zona;
+  if (i === undefined) return;
+  const z = datos.zonas[i];
+  if (e.target.dataset.campo === "nombre") z.nombre = e.target.value.trim() || "Zona sin nombre";
+  else z.precio = e.target.value === "" ? null : Math.max(0, Math.round(+e.target.value));
+  if (guardarDatos()) aviso("Zona guardada");
+});
+
+$("#listaZonas").addEventListener("click", e => {
+  const b = e.target.closest("[data-borrar]");
+  if (!b) return;
+  datos.zonas.splice(+b.dataset.borrar, 1);
+  guardarDatos();
+  renderAdminZonas();
+});
+
+$("#nuevaZona").onclick = () => {
+  datos.zonas.push({ nombre: "Nueva zona", precio: null });
+  guardarDatos();
+  renderAdminZonas();
+  $("#listaZonas").lastElementChild.querySelector("input").select();
+};
+
+// Pagos y tasas
+function renderAdminPagos() {
+  $("#tasaUsd").value = datos.tasas.usd ? numeroVE(datos.tasas.usd) : "";
+  $("#tasaBs").value = datos.tasas.bs ? numeroVE(datos.tasas.bs) : "";
+  $("#listaPagos").innerHTML = datos.pagos.map((m, i) => `
+    <div class="fila-admin pago-admin">
+      <div class="fila">
+        <input data-pago="${i}" data-campo="nombre" value="${esc(m.nombre)}" aria-label="Método de pago" style="flex:1">
+        <select data-pago="${i}" data-campo="moneda" aria-label="Moneda" style="flex:none">
+          ${Object.entries(MONEDAS).map(([cod, txt]) => `<option value="${cod}" ${m.moneda === cod ? "selected" : ""}>${txt}</option>`).join("")}
+        </select>
+        <button class="quitar peligro" data-borrar="${i}">Borrar</button>
+      </div>
+      <small class="sub">Comprobante que se le pide a la clienta (vacío si no aplica)</small>
+      <input data-pago="${i}" data-campo="referencia" value="${esc(m.referencia || "")}" aria-label="Comprobante que se pide"
+        placeholder="Ej: Número de referencia">
+      <small class="sub">Datos para pagar, uno por línea</small>
+      <textarea data-pago="${i}" data-campo="datos" rows="3" aria-label="Datos para pagar"
+        placeholder="Ej: Cuenta: 123-456">${esc(m.datos || "")}</textarea>
+    </div>`).join("") || `<p class="vacio">No hay métodos de pago. Agrega el primero.</p>`;
+}
+
+["tasaUsd", "tasaBs"].forEach(id => $("#" + id).addEventListener("change", e => {
+  const texto = e.target.value.trim();
+  const v = leerNumero(texto);
+  if (texto && !(v > 0)) return aviso("Escribe solo el número de la tasa, por ejemplo 2,9");
+  datos.tasas[id === "tasaUsd" ? "usd" : "bs"] = texto ? v : null;
+  if (guardarDatos()) aviso("Tasa guardada");
+  renderAdminPagos();
+}));
+
+$("#listaPagos").addEventListener("change", e => {
+  const i = e.target.dataset.pago;
+  if (i === undefined) return;
+  const m = datos.pagos[i];
+  const campo = e.target.dataset.campo;
+  if (campo === "nombre") m.nombre = e.target.value.trim() || "Método sin nombre";
+  else if (campo === "moneda") m.moneda = e.target.value;
+  else if (campo === "referencia") m.referencia = e.target.value.trim();
+  else m.datos = e.target.value.trim();
+  if (guardarDatos()) aviso("Método guardado");
+});
+
+$("#listaPagos").addEventListener("click", e => {
+  const b = e.target.closest("[data-borrar]");
+  if (!b) return;
+  datos.pagos.splice(+b.dataset.borrar, 1);
+  guardarDatos();
+  renderAdminPagos();
+});
+
+$("#nuevoPago").onclick = () => {
+  datos.pagos.push({ nombre: "Nuevo método", moneda: "COP" });
+  guardarDatos();
+  renderAdminPagos();
+  $("#listaPagos").lastElementChild.querySelector("input").select();
+};
+
+// Datos de la tienda
+function llenarConfig() {
+  const t = datos.tienda;
+  $("#cfgNombre").value = t.nombre;
+  $("#cfgWsp").value = t.whatsapp;
+  $("#cfgIg").value = t.instagram || "";
+  $("#cfgTk").value = t.tiktok || "";
+  $("#cfgRetiro").checked = t.retiro;
+  $("#cfgPunto").value = t.puntoRetiro || "";
+  $("#cfgHorario").value = t.horarioRetiro || "";
+  $("#cfgPin").value = "";
+}
+
+alEnviar($("#tabTienda"), () => {
+  const t = datos.tienda;
+  t.nombre = $("#cfgNombre").value.trim();
+  t.whatsapp = normalizarWsp($("#cfgWsp").value);
+  t.instagram = $("#cfgIg").value.trim();
+  t.tiktok = $("#cfgTk").value.trim();
+  t.retiro = $("#cfgRetiro").checked;
+  t.puntoRetiro = $("#cfgPunto").value.trim();
+  t.horarioRetiro = $("#cfgHorario").value.trim();
+  if ($("#cfgPin").value) t.pin = $("#cfgPin").value;
+  if (guardarDatos()) aviso("Cambios guardados");
+  llenarConfig();
+});
+
+// ---------- Inicio ----------
+document.querySelectorAll(".logo").forEach(img => img.src = LOGO);
+$("#favicon").href = LOGO;
+renderTodo();
+if (location.hash === "#admin") pedirClave();
+</script>
+</body>
+</html>
