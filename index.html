@@ -67,6 +67,25 @@
   .etiqueta.agotado { background: var(--hundido); color: var(--crema); }
   .etiqueta.personal { left: auto; right: 10px; }
   .card.sin-stock .foto { filter: grayscale(1) opacity(.55); }
+  .foto[data-ver] { cursor: zoom-in; }
+  .galeria { position: absolute; inset: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .galeria::-webkit-scrollbar { display: none; }
+  .galeria img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
+  .puntos { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: center; gap: 5px; pointer-events: none; }
+  .puntos span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.55); box-shadow: 0 0 2px rgba(0,0,0,.5); }
+  .puntos span.on { background: #fff; }
+  .foto-grande { border-radius: 14px; overflow: hidden; }
+  .flecha { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; background: rgba(20,0,4,.6); color: var(--crema); font-size: 1.5rem; line-height: 1; }
+  .flecha.izq { left: 8px; }
+  .flecha.der { right: 8px; }
+  .miniaturas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .miniaturas:empty { display: none; }
+  .mini-foto { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 1px solid var(--borde); }
+  .mini-foto img { width: 100%; height: 100%; object-fit: cover; }
+  .mini-foto .portada { position: absolute; left: 4px; bottom: 4px; padding: 2px 7px; border-radius: 999px; background: var(--oro); color: var(--fondo); font-size: .68rem; font-weight: 700; }
+  .mini-foto button { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: rgba(20,0,4,.75); color: var(--crema); font-size: .95rem; line-height: 1; }
+  .mini-foto [data-portada] { left: 4px; bottom: 4px; color: var(--oro); }
+  .mini-foto .quitar-foto { right: 4px; top: 4px; }
   .info { padding: 12px; display: flex; flex-direction: column; flex: 1; }
   .nombre { font-weight: 600; font-size: .95rem; }
   .precio { color: var(--oro); font-size: .92rem; font-weight: 600; margin-bottom: 10px; }
@@ -238,6 +257,22 @@
   </div>
 </aside>
 
+<!-- Vista grande del producto -->
+<div class="modal" id="modalVer" hidden>
+  <div class="caja">
+    <div class="foto foto-grande" id="verFotos"></div>
+    <h3 id="verNombre"></h3>
+    <div class="fila" style="justify-content:space-between">
+      <span class="precio" id="verPrecio" style="margin:0"></span>
+      <span class="sub" id="verStock"></span>
+    </div>
+    <div class="acciones">
+      <button class="btn-sec" id="cerrarVer">Cerrar</button>
+      <button class="btn" id="verAgregar">Agregar al carrito</button>
+    </div>
+  </div>
+</div>
+
 <!-- Editor de foto del relicario -->
 <div class="modal" id="modalFoto" hidden>
   <div class="caja">
@@ -365,10 +400,11 @@
         <input id="pStock" type="number" min="0" step="1" required>
       </label>
     </div>
-    <label>Foto del producto
-      <input id="pImg" type="file" accept="image/*">
+    <label>Fotos del producto (hasta 6)
+      <input id="pImg" type="file" accept="image/*" multiple>
     </label>
-    <img id="pVista" class="vista" alt="Vista previa" hidden>
+    <div class="miniaturas" id="pFotos"></div>
+    <p class="sub" id="pFotosAyuda" hidden>La primera es la portada. Toca ★ en otra foto para ponerla de portada.</p>
     <label class="check"><input type="checkbox" id="pFoto"> La clienta sube su foto (se recorta en corazón)</label>
     <div class="acciones">
       <button type="button" class="btn-sec" id="cancelarProducto">Cancelar</button>
@@ -478,18 +514,19 @@ const DATOS_INICIALES = {
     { nombre: "Zorca San Isidro", precio: 15000 },
     { nombre: "Otra zona", precio: null },
   ],
+  // imagenes: fotos del producto (la primera es la portada)
   // foto: true = la clienta sube una foto que se recorta en forma de corazón
   productos: [
-    { id: 1,  nombre: "Collar corazón",           categoria: "Collares",   precio: 35000, stock: 10, img: "" },
-    { id: 2,  nombre: "Collar con inicial",       categoria: "Collares",   precio: 40000, stock: 6,  img: "" },
-    { id: 3,  nombre: "Pulsera de eslabones",     categoria: "Pulseras",   precio: 30000, stock: 8,  img: "" },
-    { id: 4,  nombre: "Pulsera tejida",           categoria: "Pulseras",   precio: 25000, stock: 0,  img: "" },
-    { id: 5,  nombre: "Anillo liso",              categoria: "Anillos",    precio: 20000, stock: 12, img: "" },
-    { id: 6,  nombre: "Anillo con circón",        categoria: "Anillos",    precio: 28000, stock: 3,  img: "" },
-    { id: 7,  nombre: "Aretes de argolla",        categoria: "Aretes",     precio: 22000, stock: 15, img: "" },
-    { id: 8,  nombre: "Aretes estrella",          categoria: "Aretes",     precio: 18000, stock: 2,  img: "" },
-    { id: 9,  nombre: "Relicario corazón",        categoria: "Relicarios", precio: 55000, stock: 5,  img: "", foto: true },
-    { id: 10, nombre: "Relicario corazón grande", categoria: "Relicarios", precio: 65000, stock: 3,  img: "", foto: true },
+    { id: 1,  nombre: "Collar corazón",           categoria: "Collares",   precio: 35000, stock: 10, imagenes: [] },
+    { id: 2,  nombre: "Collar con inicial",       categoria: "Collares",   precio: 40000, stock: 6,  imagenes: [] },
+    { id: 3,  nombre: "Pulsera de eslabones",     categoria: "Pulseras",   precio: 30000, stock: 8,  imagenes: [] },
+    { id: 4,  nombre: "Pulsera tejida",           categoria: "Pulseras",   precio: 25000, stock: 0,  imagenes: [] },
+    { id: 5,  nombre: "Anillo liso",              categoria: "Anillos",    precio: 20000, stock: 12, imagenes: [] },
+    { id: 6,  nombre: "Anillo con circón",        categoria: "Anillos",    precio: 28000, stock: 3,  imagenes: [] },
+    { id: 7,  nombre: "Aretes de argolla",        categoria: "Aretes",     precio: 22000, stock: 15, imagenes: [] },
+    { id: 8,  nombre: "Aretes estrella",          categoria: "Aretes",     precio: 18000, stock: 2,  imagenes: [] },
+    { id: 9,  nombre: "Relicario corazón",        categoria: "Relicarios", precio: 55000, stock: 5,  imagenes: [], foto: true },
+    { id: 10, nombre: "Relicario corazón grande", categoria: "Relicarios", precio: 65000, stock: 3,  imagenes: [], foto: true },
   ],
 };
 
@@ -506,6 +543,10 @@ function cargarDatos() {
         bs: guardado.tasas?.bs ?? base.tasas.bs,
       } };
       if (!d.pagos.length || typeof d.pagos[0] === "string") d.pagos = base.pagos;   // formato anterior
+      d.productos.forEach(p => {   // productos guardados cuando solo tenían una foto
+        if (!Array.isArray(p.imagenes)) p.imagenes = p.img ? [p.img] : [];
+        delete p.img;
+      });
       d.pagos.forEach(m => {   // métodos guardados antes de tener datos de pago
         const igual = base.pagos.find(b => b.nombre === m.nombre && b.moneda === m.moneda);
         if (m.datos === undefined) m.datos = igual?.datos || "";
@@ -594,7 +635,7 @@ function aviso(texto) {
   aviso.timer = setTimeout(() => t.classList.remove("on"), 2200);
 }
 
-function reducirImagen(archivo, lado = 700) {
+function reducirImagen(archivo, lado = 640) {
   return new Promise((ok, mal) => {
     const img = new Image();
     img.onload = () => {
@@ -603,7 +644,7 @@ function reducirImagen(archivo, lado = 700) {
       c.width = Math.round(img.width * k);
       c.height = Math.round(img.height * k);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      ok(c.toDataURL("image/jpeg", 0.8));
+      ok(c.toDataURL("image/jpeg", 0.75));
     };
     img.onerror = mal;
     img.src = URL.createObjectURL(archivo);
@@ -634,10 +675,10 @@ function renderCatalogo() {
         ? `<button class="agregar" disabled>Ya tienes todas</button>`
         : `<button class="agregar" data-add="${p.id}">${p.foto ? "Personalizar" : "Agregar"}</button>`;
     }
-    const imagen = p.img ? `<img src="${esc(p.img)}" alt="${esc(p.nombre)}" loading="lazy">` : `<span class="cat">${esc(p.categoria)}</span>`;
+
     const personal = p.foto ? `<span class="etiqueta personal">Con tu foto</span>` : "";
     return `<article class="card ${p.stock <= 0 ? "sin-stock" : ""}">
-      <div class="foto">${imagen}${etiqueta}${personal}</div>
+      <div class="foto" data-ver="${p.id}">${htmlGaleria(p)}${etiqueta}${personal}</div>
       <div class="info">
         <span class="nombre">${esc(p.nombre)}</span>
         <span class="precio">${dinero(p.precio)}</span>
@@ -646,6 +687,54 @@ function renderCatalogo() {
     </article>`;
   }).join("") || `<p class="vacio">No hay productos con ese nombre. Prueba con otra palabra.</p>`;
 }
+
+// Fotos del producto que se deslizan, con puntitos si hay más de una
+function htmlGaleria(p) {
+  const imgs = p.imagenes || [];
+  if (!imgs.length) return `<span class="cat">${esc(p.categoria)}</span>`;
+  return `<div class="galeria">${imgs.map((src, k) =>
+      `<img src="${esc(src)}" alt="${esc(p.nombre)}${imgs.length > 1 ? `, foto ${k + 1}` : ""}" loading="lazy">`).join("")}</div>` +
+    (imgs.length > 1 ? `<div class="puntos">${imgs.map((_, k) => `<span class="${k ? "" : "on"}"></span>`).join("")}</div>` : "");
+}
+
+// Marca el puntito de la foto que se está viendo
+document.addEventListener("scroll", e => {
+  const gal = e.target;
+  if (!gal.classList?.contains("galeria")) return;
+  const i = Math.round(gal.scrollLeft / gal.clientWidth);
+  gal.parentElement.querySelectorAll(".puntos span").forEach((s, k) => s.classList.toggle("on", k === i));
+}, true);
+
+// Vista grande del producto
+let verId = null;
+function abrirVer(id) {
+  const p = prod(id);
+  verId = id;
+  $("#verFotos").innerHTML = htmlGaleria(p) + (p.imagenes.length > 1
+    ? `<button type="button" class="flecha izq" data-mover="-1" aria-label="Foto anterior">‹</button>
+       <button type="button" class="flecha der" data-mover="1" aria-label="Foto siguiente">›</button>` : "");
+  $("#verNombre").textContent = p.nombre;
+  $("#verPrecio").textContent = dinero(p.precio);
+  $("#verStock").textContent = p.stock <= 0 ? "Agotado"
+    : p.stock <= 3 ? `Quedan ${p.stock}` : "Disponible";
+  const b = $("#verAgregar"), libre = disponible(id);
+  b.disabled = p.stock <= 0 || libre <= 0;
+  b.textContent = p.stock <= 0 ? "Agotado" : libre <= 0 ? "Ya tienes todas" : p.foto ? "Personalizar" : "Agregar al carrito";
+  $("#modalVer").hidden = false;
+}
+
+$("#verFotos").addEventListener("click", e => {
+  const b = e.target.closest("[data-mover]");
+  if (!b) return;
+  const gal = $("#verFotos .galeria");
+  gal.scrollBy({ left: +b.dataset.mover * gal.clientWidth, behavior: "smooth" });
+});
+$("#cerrarVer").onclick = () => $("#modalVer").hidden = true;
+$("#modalVer").addEventListener("click", e => { if (e.target.id === "modalVer") $("#modalVer").hidden = true; });
+$("#verAgregar").onclick = () => {
+  $("#modalVer").hidden = true;
+  prod(verId).foto ? abrirEditor(verId) : agregar(verId);
+};
 
 // ---------- Carrito ----------
 function agregar(id, foto = null) {
@@ -691,7 +780,7 @@ function renderCarrito() {
   $("#items").innerHTML = carrito.length ? carrito.map(l => {
     const p = prod(l.id);
     const mini = l.foto ? `<img class="mini corazon" src="${l.foto}" alt="Foto del relicario">`
-      : p.img ? `<img class="mini" src="${esc(p.img)}" alt="">` : `<div class="mini"></div>`;
+      : p.imagenes[0] ? `<img class="mini" src="${esc(p.imagenes[0])}" alt="">` : `<div class="mini"></div>`;
     const controles = l.foto
       ? `<button class="quitar" data-quitar="${l.key}">Quitar</button>`
       : `<div class="cant">
@@ -950,6 +1039,8 @@ $("#confirmarFoto").onclick = () => {
 
 // ---------- Eventos de la tienda ----------
 $("#catalogo").addEventListener("click", e => {
+  const ver = e.target.closest("[data-ver]");
+  if (ver) return abrirVer(+ver.dataset.ver);
   const b = e.target.closest("[data-add]");
   if (!b) return;
   const p = prod(+b.dataset.add);
@@ -1083,10 +1174,10 @@ $("#tabsAdmin").addEventListener("click", e => {
 function renderAdminProductos() {
   $("#listaAdmin").innerHTML = datos.productos.map(p => `
     <div class="fila-admin">
-      ${p.img ? `<img class="mini" src="${esc(p.img)}" alt="">` : `<div class="mini"></div>`}
+      ${p.imagenes[0] ? `<img class="mini" src="${esc(p.imagenes[0])}" alt="">` : `<div class="mini"></div>`}
       <div class="item-info">
         <div class="nombre">${esc(p.nombre)}</div>
-        <small>${dinero(p.precio)}, ${esc(p.categoria)}${p.foto ? ", con foto" : ""}</small>
+        <small>${dinero(p.precio)}, ${esc(p.categoria)}, ${p.imagenes.length} ${p.imagenes.length === 1 ? "foto" : "fotos"}</small>
       </div>
       <div class="cant">
         <button data-stock="-1" data-id="${p.id}" aria-label="Restar stock">−</button>
@@ -1107,12 +1198,25 @@ $("#listaAdmin").addEventListener("click", e => {
   renderAdminProductos();
 });
 
-let editando = null, imgNueva = null;
+const MAX_FOTOS = 6;
+let editando = null, imgsEdit = [];
+
+function renderMiniaturas() {
+  $("#pFotos").innerHTML = imgsEdit.map((src, k) => `
+    <div class="mini-foto">
+      <img src="${esc(src)}" alt="Foto ${k + 1}">
+      ${k === 0 ? `<span class="portada">Portada</span>`
+        : `<button type="button" data-portada="${k}" aria-label="Usar de portada">★</button>`}
+      <button type="button" class="quitar-foto" data-quitar-foto="${k}" aria-label="Quitar foto">×</button>
+    </div>`).join("");
+  $("#pFotosAyuda").hidden = imgsEdit.length < 2;
+}
 
 function editarProducto(id) {
   const p = id ? prod(id) : null;
   editando = id;
-  imgNueva = null;
+  imgsEdit = [...(p?.imagenes || [])];
+  renderMiniaturas();
   $("#tituloProducto").textContent = p ? "Editar producto" : "Nuevo producto";
   $("#pNombre").value = p?.nombre || "";
   $("#pCategoria").value = p?.categoria || "";
@@ -1120,8 +1224,6 @@ function editarProducto(id) {
   $("#pStock").value = p?.stock ?? "";
   $("#pFoto").checked = !!p?.foto;
   $("#pImg").value = "";
-  $("#pVista").src = p?.img || "";
-  $("#pVista").hidden = !p?.img;
   $("#eliminarProducto").hidden = !p;
   $("#listaCategorias").innerHTML = [...new Set(datos.productos.map(x => x.categoria))]
     .map(c => `<option value="${esc(c)}">`).join("");
@@ -1132,15 +1234,23 @@ $("#nuevoProducto").onclick = () => editarProducto(null);
 $("#cancelarProducto").onclick = () => $("#modalProducto").hidden = true;
 
 $("#pImg").addEventListener("change", async e => {
-  const archivo = e.target.files[0];
-  if (!archivo) return;
-  try {
-    imgNueva = await reducirImagen(archivo);
-    $("#pVista").src = imgNueva;
-    $("#pVista").hidden = false;
-  } catch {
-    aviso("No se pudo abrir esa imagen. Prueba con otra foto.");
+  const elegidas = [...e.target.files];
+  const caben = elegidas.slice(0, MAX_FOTOS - imgsEdit.length);
+  if (elegidas.length > caben.length) aviso(`Máximo ${MAX_FOTOS} fotos por producto`);
+  for (const archivo of caben) {
+    try { imgsEdit.push(await reducirImagen(archivo)); }
+    catch { aviso("No se pudo abrir una de las fotos. Prueba con otra."); }
   }
+  e.target.value = "";
+  renderMiniaturas();
+});
+
+$("#pFotos").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.portada) imgsEdit.unshift(...imgsEdit.splice(+b.dataset.portada, 1));
+  if (b.dataset.quitarFoto) imgsEdit.splice(+b.dataset.quitarFoto, 1);
+  renderMiniaturas();
 });
 
 alEnviar($("#formProducto"), () => {
@@ -1150,11 +1260,12 @@ alEnviar($("#formProducto"), () => {
     precio: Math.max(0, Math.round(+$("#pPrecio").value)),
     stock: Math.max(0, Math.floor(+$("#pStock").value)),
     foto: $("#pFoto").checked,
+    imagenes: [...imgsEdit],
   };
-  if (imgNueva) valores.img = imgNueva;
+  const respaldo = JSON.stringify(datos.productos);
   if (editando) Object.assign(prod(editando), valores);
-  else datos.productos.push({ id: Math.max(0, ...datos.productos.map(p => p.id)) + 1, img: "", ...valores });
-  if (!guardarDatos()) return;
+  else datos.productos.push({ id: Math.max(0, ...datos.productos.map(p => p.id)) + 1, ...valores });
+  if (!guardarDatos()) { datos.productos = JSON.parse(respaldo); return; }   // sin espacio: no se cambia nada
   $("#modalProducto").hidden = true;
   renderAdminProductos();
   aviso("Producto guardado");
