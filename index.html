@@ -905,6 +905,7 @@ function horaTexto(h) {
 function mensajePedido() {
   const { subtotal, zona, total } = totales();
   const cop = n => `${n.toLocaleString("es-CO")} COP`;   // en el mensaje, montos en pesos con "COP" para que no se confundan con dólares
+  const t = texto => `*${texto}*`;                        // negrita en WhatsApp
   const pago = pagoElegido();
   let f = 0;
   const lineas = carrito.map(l => {
@@ -915,32 +916,34 @@ function mensajePedido() {
   // Monto a cancelar
   const masDelivery = zona.precio === null ? " + delivery" : "";
   const desglose = zona.retiro ? "" : ` (productos ${cop(subtotal)} + delivery ${zona.precio === null ? "a convenir" : cop(zona.precio)})`;
-  let monto = `*${cop(total)}${masDelivery}*${desglose}`;
+  const montos = [`${t("Monto a cancelar:")} ${t(cop(total) + masDelivery)}${desglose}`];
   if (pago.moneda !== "COP") {
     const convertido = convertir(total, pago.moneda);
     const tasa = pago.moneda === "USD" ? `1 dólar = ${datos.tasas.usd?.toLocaleString("es-CO")} pesos` : numeroVE(datos.tasas.bs || 0);
-    monto += convertido ? ` = *${convertido}${masDelivery}* (tasa ${tasa})` : ` (monto en ${MONEDAS[pago.moneda]} por confirmar)`;
+    montos.push(`${t(`En ${MONEDAS[pago.moneda]}:`)} ${convertido ? `${t(convertido + masDelivery)} (tasa ${tasa})` : "por confirmar"}`);
   }
-  monto += `. Pago por ${pago.nombre} (${MONEDAS[pago.moneda]})`;
+  montos.push(`${t("Forma de pago:")} ${pago.nombre} (${MONEDAS[pago.moneda]})`);
   const ref = $("#referencia").value.trim();
-  if (pago.referencia) monto += ref ? `. Ya pagué, ${pago.referencia.toLowerCase()}: ${ref}` : ". Aún no he pagado";
+  if (pago.referencia) {
+    montos.push(`${t("Estado del pago:")} ${ref ? `${t("Ya pagué")}, ${pago.referencia.toLowerCase()}: ${t(ref)}` : "Aún no he pagado"}`);
+  }
 
-  // Delivery o punto de encuentro
+  // Delivery o punto de encuentro, dicho directo
   const referencia = $("#direccion").value.trim();
   const entrega = zona.retiro
-    ? [`¿Delivery o punto de encuentro?: Punto de encuentro, ${datos.tienda.puntoRetiro}`]
-    : [`¿Delivery o punto de encuentro?: Delivery a ${zona.nombre}, ${zona.precio === null
-          ? "precio a convenir (se cobra en pesos colombianos)"
-          : `${cop(zona.precio)} (tarifa fija en pesos colombianos)`}`,
-       `   Ubicación: ${$("#ubicacion").value.trim()}`,
-       ...(referencia ? [`   Referencia: ${referencia}`] : [])];
+    ? [`${t("Punto de encuentro:")} ${datos.tienda.puntoRetiro}`]
+    : [`${t("Delivery:")} ${zona.nombre}, ${zona.precio === null
+          ? `${t("precio a convenir")} (se cobra en pesos colombianos)`
+          : `${t(cop(zona.precio))} (tarifa fija en pesos colombianos)`}`,
+       `${t("Ubicación:")} ${$("#ubicacion").value.trim()}`,
+       ...(referencia ? [`${t("Referencia:")} ${referencia}`] : [])];
 
   // Fecha y hora
   const fecha = fechaTexto($("#fecha").value);
   const horaRetiro = (datos.tienda.horarioRetiro.match(/\d{1,2}(:\d{2})?\s*[ap]\.?\s?m\.?/i) || [""])[0];
   const cuando = zona.retiro
-    ? `Fecha y hora de retiro: ${fecha}${horaRetiro ? ` a las ${horaRetiro}` : ""}`
-    : `Fecha y hora del delivery: ${fecha}, ${horaTexto($("#hora").value)}`;
+    ? `${t("Fecha y hora de retiro:")} ${t(fecha + (horaRetiro ? ` a las ${horaRetiro}` : ""))}`
+    : `${t("Fecha y hora del delivery:")} ${t(`${fecha}, ${horaTexto($("#hora").value)}`)}`;
 
   const efectivo = /efectivo/i.test(pago.nombre);
   const vuelto = efectivo ? ($("#vuelto").value.trim() || "No") : "No aplica";
@@ -948,16 +951,19 @@ function mensajePedido() {
   return [
     `¡Hola ${datos.tienda.nombre}! Quiero hacer este pedido:`,
     "",
-    `Nombre: ${$("#nombre").value.trim()}`,
-    `Número de teléfono: ${$("#telefono").value.trim()}`,
-    `Mi pedido es:`,
+    `${t("Nombre:")} ${$("#nombre").value.trim()}`,
+    `${t("Número de teléfono:")} ${$("#telefono").value.trim()}`,
+    "",
+    t("Mi pedido es:"),
     ...lineas,
-    `Monto a cancelar: ${monto}`,
+    "",
+    ...montos,
+    "",
     ...entrega,
     cuando,
-    `¿Necesitas vuelto?: ${vuelto}`,
-    ...(efectivo && pago.moneda === "USD" ? ["", "Voy a pagar en dólares: te envío la foto del billete para que confirmes que está en buen estado."] : []),
-    ...(f ? ["", `Te envío ${f > 1 ? "las fotos" : "la foto"} del relicario en el siguiente mensaje.`] : []),
+    `${t("¿Necesitas vuelto?:")} ${vuelto}`,
+    ...(efectivo && pago.moneda === "USD" ? ["", `${t("Voy a pagar en dólares:")} te envío la foto del billete para que confirmes que está en buen estado.`] : []),
+    ...(f ? ["", `${t(f > 1 ? "Fotos del relicario:" : "Foto del relicario:")} te ${f > 1 ? "las" : "la"} envío en el siguiente mensaje.`] : []),
   ].join("\n");
 }
 
