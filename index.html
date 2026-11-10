@@ -161,6 +161,7 @@
   .vista { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; }
   .fila-admin select { min-width: 0; padding: 10px; border: 1px solid var(--borde); border-radius: 8px; background: var(--hundido); }
   .grupo { display: grid; gap: 10px; }
+  .sub.destacado { color: var(--oro); font-size: .95rem; font-weight: 700; }
   .datos-pago { display: grid; gap: 8px; padding: 12px 14px; background: var(--hundido); border: 1px solid var(--borde); border-radius: 12px; }
   .datos-pago h4 { font-size: .85rem; color: var(--oro); }
   .dato { display: flex; align-items: center; gap: 10px; }
@@ -255,9 +256,12 @@
       <label id="campoRef" hidden><span id="etqRef"></span>
         <input id="referencia" inputmode="numeric" autocomplete="off" placeholder="Escríbelo cuando hayas pagado">
       </label>
-      <label id="campoVuelto" hidden>¿Necesitas vuelto? ¿De cuánto?
-        <input id="vuelto" autocomplete="off" placeholder="Ej: pago con 50.000 y necesito 5.000 de vuelto">
-      </label>
+      <div class="grupo" id="campoVuelto" hidden>
+        <label>¿Con cuánto vas a pagar? (para calcular tu vuelto)
+          <input id="vuelto" inputmode="decimal" autocomplete="off" placeholder="Ej: 100.000">
+        </label>
+        <p class="sub" id="calcVuelto">Déjalo vacío si vas a pagar exacto.</p>
+      </div>
       <p class="info-retiro" id="notaDolares" hidden>Si vas a pagar en dólares, envíanos antes una foto del billete para corroborar que esté en buen estado</p>
       <p class="sub">Los precios están en pesos colombianos. Si pagas en otra moneda, te mostramos el monto con la tasa del día.</p>
       <div class="totales">
@@ -829,7 +833,42 @@ function renderCarrito() {
   renderDatosPago(pago);
   const efectivo = /efectivo/i.test(pago.nombre);
   $("#campoVuelto").hidden = !efectivo;
+  $("#vuelto").placeholder = pago.moneda === "USD" ? "Ej: 20" : "Ej: 100.000";
+  renderVuelto();
   $("#notaDolares").hidden = !(efectivo && pago.moneda === "USD");
+}
+
+// Vuelto: la clienta dice con cuánto paga en efectivo y se calcula lo que hay que devolverle
+function calcularVuelto() {
+  const { total, zona } = totales();
+  const pago = pagoElegido();
+  const texto = $("#vuelto").value.trim();
+  if (!texto) return { estado: "exacto" };
+  const paga = leerNumero(texto);
+  if (!(paga > 0)) return { estado: "invalido" };
+  const usd = pago.moneda === "USD";
+  const fmt = n => usd ? "USD " + dosDecimales(n) : `${Math.round(n).toLocaleString("es-CO")} COP`;
+  if (!zona) return { estado: "sinZona", paga: fmt(paga) };
+  if (zona.precio === null) return { estado: "pendiente", paga: fmt(paga), motivo: "falta el precio del delivery" };
+  if (usd && !datos.tasas.usd) return { estado: "pendiente", paga: fmt(paga), motivo: "falta la tasa del dólar" };
+  const debe = usd ? Math.ceil(total / datos.tasas.usd * 100) / 100 : total;
+  const dif = Math.round((paga - debe) * 100) / 100;
+  if (dif < 0) return { estado: "falta", paga: fmt(paga), falta: fmt(-dif) };
+  return { estado: dif === 0 ? "exacto" : "vuelto", paga: fmt(paga), vuelto: fmt(dif) };
+}
+
+function renderVuelto() {
+  const v = calcularVuelto();
+  const vacio = !$("#vuelto").value.trim();
+  $("#calcVuelto").classList.toggle("destacado", ["vuelto", "falta"].includes(v.estado));
+  $("#calcVuelto").textContent = {
+    exacto: vacio ? "Déjalo vacío si vas a pagar exacto." : "Pago exacto, no necesitas vuelto.",
+    invalido: "Escribe solo el número, por ejemplo 100.000",
+    sinZona: "Elige la entrega para calcular tu vuelto.",
+    pendiente: `Pagas con ${v.paga}. El vuelto se confirma por WhatsApp porque ${v.motivo}.`,
+    falta: `Con ${v.paga} no alcanza: faltan ${v.falta}.`,
+    vuelto: `Tu vuelto: ${v.vuelto}`,
+  }[v.estado];
 }
 
 // Muestra a dónde pagar según el método elegido, con botón para copiar cada dato
@@ -946,7 +985,11 @@ function mensajePedido() {
     : `${t("Fecha y hora del delivery:")} ${t(`${fecha}, ${horaTexto($("#hora").value)}`)}`;
 
   const efectivo = /efectivo/i.test(pago.nombre);
-  const vuelto = efectivo ? ($("#vuelto").value.trim() || "No") : "No aplica";
+  const v = calcularVuelto();
+  const vuelto = !efectivo ? "No aplica"
+    : v.estado === "vuelto" ? `Sí. Pago con ${t(v.paga)}, mi vuelto es ${t(v.vuelto)}`
+    : v.estado === "pendiente" ? `Sí. Pago con ${t(v.paga)} (vuelto por confirmar, ${v.motivo})`
+    : "No, pago exacto";
 
   return [
     `¡Hola ${datos.tienda.nombre}! Quiero hacer este pedido:`,
@@ -1118,8 +1161,10 @@ $("#abrirCarrito").onclick = () => abrirCarrito(true);
 $("#cerrarCarrito").onclick = () => abrirCarrito(false);
 $("#capa").onclick = () => abrirCarrito(false);
 $("#zona").addEventListener("change", renderCarrito);
+$("#vuelto").addEventListener("input", renderVuelto);
 $("#pago").addEventListener("change", () => {
   $("#referencia").value = "";   // cada método tiene su propio comprobante
+  $("#vuelto").value = "";
   renderCarrito();
 });
 
@@ -1157,6 +1202,10 @@ $("#vaciar").onclick = () => { carrito = []; actualizar(); };
 
 alEnviar($("#formPedido"), () => {
   const { zona } = totales();
+  if (/efectivo/i.test(pagoElegido().nombre) && ["falta", "invalido"].includes(calcularVuelto().estado)) {
+    $("#vuelto").focus();
+    return aviso(calcularVuelto().estado === "falta" ? "Con ese monto no alcanza para el total" : "Escribe solo el número con el que vas a pagar");
+  }
   if (!zona.retiro && !$("#hora").value) {
     $("#hora").focus();
     return aviso("Elige la hora del delivery");
