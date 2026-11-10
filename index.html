@@ -222,6 +222,9 @@
       <label>Nombre
         <input id="nombre" required placeholder="Tu nombre y apellido">
       </label>
+      <label>Número de teléfono
+        <input id="telefono" type="tel" inputmode="tel" autocomplete="tel" required placeholder="Ej: 0414-1234567">
+      </label>
       <label>Entrega
         <select id="zona" required></select>
       </label>
@@ -237,6 +240,14 @@
           <textarea id="direccion" rows="2" placeholder="Ej: casa blanca con portón negro"></textarea>
         </label>
       </div>
+      <div class="acciones">
+        <label><span id="etqFecha">Fecha</span>
+          <input id="fecha" type="date" required>
+        </label>
+        <label id="campoHora">Hora
+          <input id="hora" type="time">
+        </label>
+      </div>
       <label>Método de pago
         <select id="pago"></select>
       </label>
@@ -244,6 +255,10 @@
       <label id="campoRef" hidden><span id="etqRef"></span>
         <input id="referencia" inputmode="numeric" autocomplete="off" placeholder="Escríbelo cuando hayas pagado">
       </label>
+      <label id="campoVuelto" hidden>¿Necesitas vuelto? ¿De cuánto?
+        <input id="vuelto" autocomplete="off" placeholder="Ej: pago con 50.000 y necesito 5.000 de vuelto">
+      </label>
+      <p class="info-retiro" id="notaDolares" hidden>Si vas a pagar en dólares, envíanos antes una foto del billete para corroborar que esté en buen estado 🙋🏻‍♀️</p>
       <p class="sub">Los precios están en pesos colombianos. Si pagas en otra moneda, te mostramos el monto con la tasa del día.</p>
       <div class="totales">
         <div><span>Subtotal</span><span id="subtotal"></span></div>
@@ -798,6 +813,8 @@ function renderCarrito() {
   const { subtotal, zona, total } = totales();
   $("#campoDir").hidden = !!zona?.retiro;
   $("#infoRetiro").hidden = !zona?.retiro;
+  $("#etqFecha").textContent = zona?.retiro ? "Fecha de retiro" : "Fecha del delivery";
+  $("#campoHora").hidden = !!zona?.retiro;   // en el punto de encuentro la hora es fija
   $("#infoRetiro").textContent = `Retiras tu pedido en ${datos.tienda.puntoRetiro}. Horario: ${datos.tienda.horarioRetiro}`;
   $("#subtotal").textContent = dinero(subtotal);
   $("#costoDelivery").textContent = !zona ? "Elige la zona"
@@ -810,6 +827,9 @@ function renderCarrito() {
   $("#etqPagar").textContent = `A pagar en ${MONEDAS[pago.moneda]}`;
   $("#montoPagar").textContent = (convertir(total, pago.moneda) || "Tasa por confirmar") + masDelivery;
   renderDatosPago(pago);
+  const efectivo = /efectivo/i.test(pago.nombre);
+  $("#campoVuelto").hidden = !efectivo;
+  $("#notaDolares").hidden = !(efectivo && pago.moneda === "USD");
 }
 
 // Muestra a dónde pagar según el método elegido, con botón para copiar cada dato
@@ -875,49 +895,68 @@ function abrirCarrito(on) {
 }
 
 // ---------- Pedido por WhatsApp ----------
+// Fecha y hora en palabras: "jueves, 13 de noviembre" y "3:00 p. m."
+const fechaTexto = f => new Date(f + "T12:00").toLocaleDateString("es-VE", { weekday: "long", day: "numeric", month: "long" });
+function horaTexto(h) {
+  const [H, M] = h.split(":").map(Number);
+  return `${H % 12 || 12}:${String(M).padStart(2, "0")} ${H < 12 ? "a. m." : "p. m."}`;
+}
+
 function mensajePedido() {
   const { subtotal, zona, total } = totales();
   const cop = n => `${n.toLocaleString("es-CO")} COP`;   // en el mensaje, montos en pesos con "COP" para que no se confundan con dólares
+  const pago = pagoElegido();
   let f = 0;
   const lineas = carrito.map(l => {
     const p = prod(l.id);
     return `• ${l.cant} x ${p.nombre}${l.foto ? ` (con foto #${++f})` : ""}: ${cop(p.precio * l.cant)}`;
   });
-  const envio = zona.precio === null
-    ? "a convenir (se cobra en pesos colombianos)"
-    : `${cop(zona.precio)} (tarifa fija en pesos colombianos)`;
+
+  // Monto a cancelar
   const masDelivery = zona.precio === null ? " + delivery" : "";
-  const pago = pagoElegido();
-  const referencia = $("#direccion").value.trim();
-  let lineaMonto = [];
+  const desglose = zona.retiro ? "" : ` (productos ${cop(subtotal)} + delivery ${zona.precio === null ? "a convenir" : cop(zona.precio)})`;
+  let monto = `*${cop(total)}${masDelivery}*${desglose}`;
   if (pago.moneda !== "COP") {
-    const monto = convertir(total, pago.moneda);
-    const tasa = pago.moneda === "USD"
-      ? `1 dólar = ${datos.tasas.usd?.toLocaleString("es-CO")} pesos`
-      : numeroVE(datos.tasas.bs || 0);
-    lineaMonto = [monto
-      ? `*A pagar en ${MONEDAS[pago.moneda]}: ${monto}${masDelivery}* (tasa: ${tasa})`
-      : `A pagar en ${MONEDAS[pago.moneda]}: por confirmar`];
+    const convertido = convertir(total, pago.moneda);
+    const tasa = pago.moneda === "USD" ? `1 dólar = ${datos.tasas.usd?.toLocaleString("es-CO")} pesos` : numeroVE(datos.tasas.bs || 0);
+    monto += convertido ? ` = *${convertido}${masDelivery}* (tasa ${tasa})` : ` (monto en ${MONEDAS[pago.moneda]} por confirmar)`;
   }
+  monto += `. Pago por ${pago.nombre} (${MONEDAS[pago.moneda]})`;
+  const ref = $("#referencia").value.trim();
+  if (pago.referencia) monto += ref ? `. Ya pagué, ${pago.referencia.toLowerCase()}: ${ref}` : ". Aún no he pagado";
+
+  // Delivery o punto de encuentro
+  const referencia = $("#direccion").value.trim();
+  const entrega = zona.retiro
+    ? [`✅¿Delivery o punto de encuentro?: Punto de encuentro, ${datos.tienda.puntoRetiro}`]
+    : [`✅¿Delivery o punto de encuentro?: Delivery a ${zona.nombre}, ${zona.precio === null
+          ? "precio a convenir (se cobra en pesos colombianos)"
+          : `${cop(zona.precio)} (tarifa fija en pesos colombianos)`}`,
+       `   Ubicación: ${$("#ubicacion").value.trim()}`,
+       ...(referencia ? [`   Referencia: ${referencia}`] : [])];
+
+  // Fecha y hora
+  const fecha = fechaTexto($("#fecha").value);
+  const horaRetiro = (datos.tienda.horarioRetiro.match(/\d{1,2}(:\d{2})?\s*[ap]\.?\s?m\.?/i) || [""])[0];
+  const cuando = zona.retiro
+    ? `✅Fecha y hora de retiro: ${fecha}${horaRetiro ? ` a las ${horaRetiro}` : ""}`
+    : `✅Fecha y hora del delivery: ${fecha}, ${horaTexto($("#hora").value)}`;
+
+  const efectivo = /efectivo/i.test(pago.nombre);
+  const vuelto = efectivo ? ($("#vuelto").value.trim() || "No") : "No aplica";
+
   return [
-    `¡Hola! Quiero hacer este pedido en ${datos.tienda.nombre}:`,
+    `¡Hola ${datos.tienda.nombre}! Quiero hacer este pedido:`,
     "",
+    `✅Nombre: ${$("#nombre").value.trim()}`,
+    `✅Número de teléfono: ${$("#telefono").value.trim()}`,
+    `✅Mi pedido es:`,
     ...lineas,
-    "",
-    `Subtotal: ${cop(subtotal)}`,
-    zona.retiro
-      ? `Entrega: retiro en el punto de encuentro, ${datos.tienda.puntoRetiro} (${datos.tienda.horarioRetiro})`
-      : `Delivery (${zona.nombre}): ${envio}`,
-    `*Total: ${cop(total)}${masDelivery}*`,
-    `Pago: ${pago.nombre} (${MONEDAS[pago.moneda]})`,
-    ...lineaMonto,
-    ...(pago.referencia
-      ? [`${pago.referencia}: ${$("#referencia").value.trim() || "pendiente, lo envío al pagar"}`]
-      : []),
-    "",
-    `Nombre: ${$("#nombre").value.trim()}`,
-    ...(zona.retiro ? [] : [`Ubicación: ${$("#ubicacion").value.trim()}`]),
-    ...(!zona.retiro && referencia ? [`Referencia: ${referencia}`] : []),
+    `✅Monto a cancelar: ${monto}`,
+    ...entrega,
+    cuando,
+    `✅¿Necesitas vuelto?: ${vuelto}`,
+    ...(efectivo && pago.moneda === "USD" ? ["", "📸 Voy a pagar en dólares: te envío la foto del billete para que confirmes que está en buen estado."] : []),
     ...(f ? ["", `Te envío ${f > 1 ? "las fotos" : "la foto"} del relicario en el siguiente mensaje.`] : []),
   ].join("\n");
 }
@@ -1112,6 +1151,15 @@ $("#vaciar").onclick = () => { carrito = []; actualizar(); };
 
 alEnviar($("#formPedido"), () => {
   const { zona } = totales();
+  if (!zona.retiro && !$("#hora").value) {
+    $("#hora").focus();
+    return aviso("Elige la hora del delivery");
+  }
+  const dia = new Date($("#fecha").value + "T12:00").getDay();
+  if (zona.retiro && /lunes a viernes/i.test(datos.tienda.horarioRetiro) && (dia === 0 || dia === 6)) {
+    $("#fecha").focus();
+    return aviso("El punto de encuentro es de lunes a viernes. Elige otro día.");
+  }
   if (!zona.retiro && !$("#ubicacion").value.trim()) {
     $("#ubicacion").focus();
     return aviso("Comparte tu ubicación o pega el enlace de Google Maps");
@@ -1400,6 +1448,10 @@ alEnviar($("#tabTienda"), () => {
 });
 
 // ---------- Inicio ----------
+{
+  const hoy = new Date();
+  $("#fecha").min = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
 document.querySelectorAll(".logo").forEach(img => img.src = LOGO);
 $("#favicon").href = LOGO;
 renderTodo();
