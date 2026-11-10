@@ -258,7 +258,7 @@
       <label id="campoVuelto" hidden>¿Necesitas vuelto? ¿De cuánto?
         <input id="vuelto" autocomplete="off" placeholder="Ej: pago con 50.000 y necesito 5.000 de vuelto">
       </label>
-      <p class="info-retiro" id="notaDolares" hidden>Si vas a pagar en dólares, envíanos antes una foto del billete para corroborar que esté en buen estado 🙋🏻‍♀️</p>
+      <p class="info-retiro" id="notaDolares" hidden>Si vas a pagar en dólares, envíanos antes una foto del billete para corroborar que esté en buen estado</p>
       <p class="sub">Los precios están en pesos colombianos. Si pagas en otra moneda, te mostramos el monto con la tasa del día.</p>
       <div class="totales">
         <div><span>Subtotal</span><span id="subtotal"></span></div>
@@ -928,8 +928,8 @@ function mensajePedido() {
   // Delivery o punto de encuentro
   const referencia = $("#direccion").value.trim();
   const entrega = zona.retiro
-    ? [`✅¿Delivery o punto de encuentro?: Punto de encuentro, ${datos.tienda.puntoRetiro}`]
-    : [`✅¿Delivery o punto de encuentro?: Delivery a ${zona.nombre}, ${zona.precio === null
+    ? [`¿Delivery o punto de encuentro?: Punto de encuentro, ${datos.tienda.puntoRetiro}`]
+    : [`¿Delivery o punto de encuentro?: Delivery a ${zona.nombre}, ${zona.precio === null
           ? "precio a convenir (se cobra en pesos colombianos)"
           : `${cop(zona.precio)} (tarifa fija en pesos colombianos)`}`,
        `   Ubicación: ${$("#ubicacion").value.trim()}`,
@@ -939,8 +939,8 @@ function mensajePedido() {
   const fecha = fechaTexto($("#fecha").value);
   const horaRetiro = (datos.tienda.horarioRetiro.match(/\d{1,2}(:\d{2})?\s*[ap]\.?\s?m\.?/i) || [""])[0];
   const cuando = zona.retiro
-    ? `✅Fecha y hora de retiro: ${fecha}${horaRetiro ? ` a las ${horaRetiro}` : ""}`
-    : `✅Fecha y hora del delivery: ${fecha}, ${horaTexto($("#hora").value)}`;
+    ? `Fecha y hora de retiro: ${fecha}${horaRetiro ? ` a las ${horaRetiro}` : ""}`
+    : `Fecha y hora del delivery: ${fecha}, ${horaTexto($("#hora").value)}`;
 
   const efectivo = /efectivo/i.test(pago.nombre);
   const vuelto = efectivo ? ($("#vuelto").value.trim() || "No") : "No aplica";
@@ -948,15 +948,15 @@ function mensajePedido() {
   return [
     `¡Hola ${datos.tienda.nombre}! Quiero hacer este pedido:`,
     "",
-    `✅Nombre: ${$("#nombre").value.trim()}`,
-    `✅Número de teléfono: ${$("#telefono").value.trim()}`,
-    `✅Mi pedido es:`,
+    `Nombre: ${$("#nombre").value.trim()}`,
+    `Número de teléfono: ${$("#telefono").value.trim()}`,
+    `Mi pedido es:`,
     ...lineas,
-    `✅Monto a cancelar: ${monto}`,
+    `Monto a cancelar: ${monto}`,
     ...entrega,
     cuando,
-    `✅¿Necesitas vuelto?: ${vuelto}`,
-    ...(efectivo && pago.moneda === "USD" ? ["", "📸 Voy a pagar en dólares: te envío la foto del billete para que confirmes que está en buen estado."] : []),
+    `¿Necesitas vuelto?: ${vuelto}`,
+    ...(efectivo && pago.moneda === "USD" ? ["", "Voy a pagar en dólares: te envío la foto del billete para que confirmes que está en buen estado."] : []),
     ...(f ? ["", `Te envío ${f > 1 ? "las fotos" : "la foto"} del relicario en el siguiente mensaje.`] : []),
   ].join("\n");
 }
