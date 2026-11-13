@@ -213,6 +213,7 @@
   .nosotros { display: grid; gap: 14px; }
   .nosotros h2 { font-family: "Marcellus", serif; font-weight: 400; font-size: clamp(1.6rem, 5vw, 2rem); line-height: 1.2; color: var(--oro); margin-top: 30px; }
   .nosotros > .acciones { margin-top: 28px; }
+  #nosContenido { display: contents; }
   .nosotros a.btn, .nosotros a.btn-sec { text-decoration: none; }
   .nosotros a.btn { color: var(--fondo); }
   .nosotros a.btn-sec { color: var(--crema); }
@@ -273,27 +274,10 @@
   <section class="hero hero-nosotros">
     <img class="logo logo-hero" alt="">
     <h1>Quiénes somos</h1>
-    <p class="lema">Nuestra Esencia: Elegancia que Empodera</p>
+    <p class="lema" id="nosLema"></p>
   </section>
   <div class="pagina nosotros">
-    <p>En LOUZE creemos que los accesorios no son un simple complemento; son una declaración de intenciones. Nacimos en San Cristóbal con una misión clara: acompañar a la mujer moderna en su día a día a través de piezas de joyería fina —collares, anillos y zarcillos— diseñadas para resistir el ritmo de su vida y realzar su presencia.</p>
-    <p class="destacada">Queremos que cada pieza sea un recordatorio tangible de tu propio valor. Porque cuando una mujer elige qué ponerse por la mañana, también está eligiendo cómo quiere pisar el mundo: con seguridad, con elegancia y con un poder inquebrantable.</p>
-
-    <h2>Nuestros Principios y Valores</h2>
-    <ul class="valores">
-      <li><strong>Autoridad y Presencia</strong>Diseñamos para que cada mujer sienta que ocupa su espacio con seguridad, luciendo accesorios que transmiten distinción y carácter.</li>
-      <li><strong>Calidad Duradera</strong>Apostamos por piezas resistentes y de excelente acabado (como el acero inoxidable), pensadas para acompañarte hoy, mañana y siempre, sin perder su brillo.</li>
-      <li><strong>Versatilidad Sofisticada</strong>Sabemos que tu agenda es dinámica. Por eso, nuestros accesorios están creados para adaptarse sin esfuerzo a cualquier momento, desde una reunión importante hasta una salida casual.</li>
-      <li><strong>Ambición sin Límites</strong>Creemos en las mujeres que sueñan en grande, que construyen su propio camino y que buscan sentirse inspiradas y poderosas en cada faceta de su vida.</li>
-    </ul>
-
-    <h2>¿Para quién es LOUZE?</h2>
-    <p>Nuestra comunidad está formada por mujeres auténticas, decididas y multifacéticas. LOUZE es para ti si te identificas con alguno de estos perfiles:</p>
-    <ul class="perfiles">
-      <li><strong>La joven estudiante y emprendedora</strong>Esa fuerza joven que equilibra los libros, los proyectos, los sueños de negocio y las ganas de comerse el mundo, buscando siempre un estilo que refleje su madurez y ambición.</li>
-      <li><strong>La mamá trabajadora</strong>Esa mujer imparable que lidera con el ejemplo, gestiona su tiempo con maestría y necesita sentirse cómoda, arreglada y segura de sí misma en cada rol que desempeña.</li>
-    </ul>
-    <p class="cierre">En definitiva, LOUZE es para la mujer que quiere sentirse bien en su propia piel, que valora la calidad y que busca en los detalles pequeños el impulso perfecto para sentirse poderosa y lista para conquistar cualquier meta.</p>
+    <div id="nosContenido"></div>
     <div class="acciones">
       <a class="btn" href="#tienda">Ver la tienda</a>
       <a class="btn-sec" href="#catalogos">Ver catálogos</a>
@@ -446,6 +430,7 @@
     <button class="chip" data-tab="tabDelivery">Delivery</button>
     <button class="chip" data-tab="tabPagos">Pagos</button>
     <button class="chip" data-tab="tabCatalogos">Catálogos</button>
+    <button class="chip" data-tab="tabNosotros">Quiénes somos</button>
     <button class="chip" data-tab="tabTienda">Tienda</button>
   </div>
 
@@ -484,6 +469,36 @@
         <textarea id="cfgNotaCat" rows="3"></textarea>
       </label>
     </div>
+  </div>
+
+  <div class="seccion form" id="tabNosotros" hidden>
+    <p class="sub">Aquí cambias el texto de la página Quiénes somos. Cada cambio se guarda solo al salir del campo. Para separar párrafos, usa Enter.</p>
+    <label>Frase debajo del título
+      <input data-nos="lema">
+    </label>
+    <label>Texto de presentación
+      <textarea data-nos="intro" rows="7"></textarea>
+    </label>
+    <label>Frase destacada (sale con la línea dorada)
+      <textarea data-nos="destacada" rows="5"></textarea>
+    </label>
+    <label>Título de los valores
+      <input data-nos="tituloValores">
+    </label>
+    <div id="nosValores" class="lista"></div>
+    <button type="button" class="btn-sec" data-agregar="valores">+ Agregar valor</button>
+    <label>Título de los perfiles
+      <input data-nos="tituloPerfiles">
+    </label>
+    <label>Texto antes de los perfiles
+      <textarea data-nos="introPerfiles" rows="3"></textarea>
+    </label>
+    <div id="nosPerfiles" class="lista"></div>
+    <button type="button" class="btn-sec" data-agregar="perfiles">+ Agregar perfil</button>
+    <label>Frase final
+      <textarea data-nos="cierre" rows="4"></textarea>
+    </label>
+    <button type="button" class="btn" id="verNosotros">Ver cómo quedó</button>
   </div>
 
   <form class="seccion form" id="tabTienda" hidden>
@@ -596,6 +611,32 @@ const DATOS_INICIALES = {
     { id: "oro", nombre: "Oro", temporada: "", archivo: "", pdfNombre: "", pdfTamano: 0, pdfFecha: "" },
     { id: "plata", nombre: "Plata", temporada: "", archivo: "", pdfNombre: "", pdfTamano: 0, pdfFecha: "" },
   ],
+  // Texto de la página Quiénes somos (se edita desde el panel)
+  nosotros: {
+    lema: "Nuestra Esencia: Elegancia que Empodera",
+    intro: "En LOUZE creemos que los accesorios no son un simple complemento; son una declaración de intenciones. Nacimos en San Cristóbal con una misión clara: acompañar a la mujer moderna en su día a día a través de piezas de joyería fina —collares, anillos y zarcillos— diseñadas para resistir el ritmo de su vida y realzar su presencia.",
+    destacada: "Queremos que cada pieza sea un recordatorio tangible de tu propio valor. Porque cuando una mujer elige qué ponerse por la mañana, también está eligiendo cómo quiere pisar el mundo: con seguridad, con elegancia y con un poder inquebrantable.",
+    tituloValores: "Nuestros Principios y Valores",
+    valores: [
+      { titulo: "Autoridad y Presencia",
+        texto: "Diseñamos para que cada mujer sienta que ocupa su espacio con seguridad, luciendo accesorios que transmiten distinción y carácter." },
+      { titulo: "Calidad Duradera",
+        texto: "Apostamos por piezas resistentes y de excelente acabado (como el acero inoxidable), pensadas para acompañarte hoy, mañana y siempre, sin perder su brillo." },
+      { titulo: "Versatilidad Sofisticada",
+        texto: "Sabemos que tu agenda es dinámica. Por eso, nuestros accesorios están creados para adaptarse sin esfuerzo a cualquier momento, desde una reunión importante hasta una salida casual." },
+      { titulo: "Ambición sin Límites",
+        texto: "Creemos en las mujeres que sueñan en grande, que construyen su propio camino y que buscan sentirse inspiradas y poderosas en cada faceta de su vida." },
+    ],
+    tituloPerfiles: "¿Para quién es LOUZE?",
+    introPerfiles: "Nuestra comunidad está formada por mujeres auténticas, decididas y multifacéticas. LOUZE es para ti si te identificas con alguno de estos perfiles:",
+    perfiles: [
+      { titulo: "La joven estudiante y emprendedora",
+        texto: "Esa fuerza joven que equilibra los libros, los proyectos, los sueños de negocio y las ganas de comerse el mundo, buscando siempre un estilo que refleje su madurez y ambición." },
+      { titulo: "La mamá trabajadora",
+        texto: "Esa mujer imparable que lidera con el ejemplo, gestiona su tiempo con maestría y necesita sentirse cómoda, arreglada y segura de sí misma en cada rol que desempeña." },
+    ],
+    cierre: "En definitiva, LOUZE es para la mujer que quiere sentirse bien en su propia piel, que valora la calidad y que busca en los detalles pequeños el impulso perfecto para sentirse poderosa y lista para conquistar cualquier meta.",
+  },
   notaCatalogos: "Estos pedidos tardan 2 semanas en llegar. Para pedirlo pagas la mitad y la otra mitad la pagas al llegar el pedido.",
   // Precios en pesos colombianos. precio: null = el delivery se acuerda por WhatsApp
   zonas: [
@@ -1070,6 +1111,23 @@ function renderTodo() {
   renderOpcionesPedido();
   actualizar();
   renderCatalogos();
+  renderNosotros();
+}
+
+// Página Quiénes somos, armada con el texto que la dueña edita en el panel
+function renderNosotros() {
+  const n = datos.nosotros;
+  const parrafos = (texto, clase) => (texto || "").split("\n").map(s => s.trim()).filter(Boolean)
+    .map(s => `<p${clase ? ` class="${clase}"` : ""}>${esc(s)}</p>`).join("");
+  const lista = (items, clase) => items.length
+    ? `<ul class="${clase}">${items.map(x => `<li><strong>${esc(x.titulo)}</strong>${esc(x.texto)}</li>`).join("")}</ul>` : "";
+  $("#nosLema").textContent = n.lema;
+  $("#nosLema").hidden = !n.lema;
+  $("#nosContenido").innerHTML =
+    parrafos(n.intro) + parrafos(n.destacada, "destacada") +
+    (n.valores.length ? `<h2>${esc(n.tituloValores)}</h2>${lista(n.valores, "valores")}` : "") +
+    (n.introPerfiles || n.perfiles.length ? `<h2>${esc(n.tituloPerfiles)}</h2>${parrafos(n.introPerfiles)}${lista(n.perfiles, "perfiles")}` : "") +
+    parrafos(n.cierre, "cierre");
 }
 
 // ---------- Catálogos de oro y plata ----------
@@ -1553,6 +1611,7 @@ alEnviar($("#formPin"), () => {
   renderAdminZonas();
   renderAdminPagos();
   renderAdminCatalogos();
+  renderAdminNosotros();
   llenarConfig();
   $("#panelAdmin").hidden = false;
   document.body.style.overflow = "hidden";
@@ -1569,7 +1628,7 @@ $("#tabsAdmin").addEventListener("click", e => {
   const b = e.target.closest("[data-tab]");
   if (!b) return;
   document.querySelectorAll("#tabsAdmin .chip").forEach(c => c.classList.toggle("activo", c === b));
-  ["tabProductos", "tabDelivery", "tabPagos", "tabCatalogos", "tabTienda"].forEach(id => $("#" + id).hidden = id !== b.dataset.tab);
+  ["tabProductos", "tabDelivery", "tabPagos", "tabCatalogos", "tabNosotros", "tabTienda"].forEach(id => $("#" + id).hidden = id !== b.dataset.tab);
 });
 
 // Productos e inventario
@@ -1773,6 +1832,53 @@ $("#nuevoPago").onclick = () => {
   renderAdminPagos();
   $("#listaPagos").lastElementChild.querySelector("input").select();
 };
+
+// Quiénes somos: textos, valores y perfiles
+function renderAdminNosotros() {
+  const n = datos.nosotros;
+  document.querySelectorAll("#tabNosotros [data-nos]").forEach(el => el.value = n[el.dataset.nos] || "");
+  const filas = (lista, nombre) => n[lista].map((x, i) => `
+    <div class="fila-admin pago-admin">
+      <div class="fila">
+        <input data-lista="${lista}" data-i="${i}" data-campo="titulo" value="${esc(x.titulo)}" aria-label="Título del ${nombre}" style="flex:1">
+        <button type="button" class="quitar peligro" data-borrar-nos="${lista}" data-i="${i}">Borrar</button>
+      </div>
+      <textarea data-lista="${lista}" data-i="${i}" data-campo="texto" rows="3" aria-label="Texto del ${nombre}">${esc(x.texto)}</textarea>
+    </div>`).join("") || `<p class="vacio">No hay ningún ${nombre}. Agrega uno o deja la sección vacía para ocultarla.</p>`;
+  $("#nosValores").innerHTML = filas("valores", "valor");
+  $("#nosPerfiles").innerHTML = filas("perfiles", "perfil");
+}
+
+$("#tabNosotros").addEventListener("change", e => {
+  const el = e.target, n = datos.nosotros;
+  if (el.dataset.nos) n[el.dataset.nos] = el.value.trim();
+  else if (el.dataset.lista) n[el.dataset.lista][+el.dataset.i][el.dataset.campo] = el.value.trim();
+  else return;
+  if (guardarDatos()) aviso("Guardado");
+});
+
+$("#tabNosotros").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const n = datos.nosotros;
+  if (b.dataset.agregar) {
+    n[b.dataset.agregar].push({ titulo: b.dataset.agregar === "valores" ? "Nuevo valor" : "Nuevo perfil", texto: "" });
+    guardarDatos();
+    renderAdminNosotros();
+    const nuevas = document.querySelectorAll(`[data-lista="${b.dataset.agregar}"][data-campo="titulo"]`);
+    nuevas[nuevas.length - 1].select();
+  }
+  if (b.dataset.borrarNos) {
+    n[b.dataset.borrarNos].splice(+b.dataset.i, 1);
+    guardarDatos();
+    renderAdminNosotros();
+    aviso("Borrado");
+  }
+  if (b.id === "verNosotros") {
+    $("#salirAdmin").click();
+    location.hash = "nosotros";
+  }
+});
 
 // Catálogos: subir, cambiar o quitar el PDF de cada temporada
 async function renderAdminCatalogos() {
