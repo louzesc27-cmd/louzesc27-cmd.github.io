@@ -151,7 +151,7 @@
   .admin-top { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--hundido); border-bottom: 1px solid var(--borde); }
   .admin-top h2 { font-family: "Marcellus", serif; font-weight: 400; font-size: 1.35rem; color: var(--oro); }
   .admin-top button { text-decoration: underline; font-size: .9rem; }
-  .tabs { display: flex; gap: 8px; max-width: 720px; margin: 0 auto; padding: 14px 16px; }
+  .tabs { display: flex; gap: 8px; max-width: 720px; margin: 0 auto; padding: 14px 16px; overflow-x: auto; scrollbar-width: none; }
   .seccion { max-width: 720px; margin: 0 auto; padding: 0 16px 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .seccion.form { margin-top: 0; }
   .lista { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
@@ -176,7 +176,55 @@
 
   .toast { position: fixed; bottom: 84px; left: 50%; transform: translate(-50%, 20px); background: var(--crema); color: var(--fondo); font-weight: 600; padding: 10px 16px; border-radius: 999px; font-size: .88rem; opacity: 0; transition: .25s; z-index: 50; pointer-events: none; }
   .toast.on { opacity: 1; transform: translate(-50%, 0); }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  /* Menú de secciones */
+  .top { flex-wrap: wrap; row-gap: 2px; }
+  .nav { flex-basis: 100%; display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; font-size: .88rem; }
+  .nav a { color: var(--texto2); text-decoration: none; padding: 4px 0; white-space: nowrap; border-bottom: 2px solid transparent; }
+  .nav a:hover, .nav a:focus-visible { color: var(--oro); border-color: var(--oro); }
+  #tienda, #catalogos, #nosotros { scroll-margin-top: 104px; }
+  html { scroll-behavior: smooth; }
+
+  /* Secciones de contenido */
+  .bloque { max-width: 1100px; margin: 0 auto; padding: 48px 16px 40px; border-top: 1px solid var(--borde); }
+  .bloque h2 { font-family: "Marcellus", serif; font-weight: 400; font-size: clamp(1.9rem, 6vw, 2.6rem); line-height: 1.1; color: var(--oro); margin-bottom: 10px; }
+  .bloque .intro { color: var(--texto2); max-width: 52ch; margin-bottom: 22px; }
+
+  /* Catálogos de oro y plata */
+  .catalogos { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 600px) { .catalogos { grid-template-columns: 1fr 1fr; } }
+  .cat-card { background: var(--superficie); border: 1px solid var(--borde); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+  .metal { padding: 30px 18px; font-family: "Marcellus", serif; font-size: 2.1rem; line-height: 1; }
+  .metal.oro { color: #3b2a10; background: linear-gradient(120deg, #a8824a 0%, #e9d3a3 38%, #f7ead0 50%, #d4b47a 64%, #a8824a 100%); }
+  .metal.plata { color: #2b3238; background: repeating-linear-gradient(90deg, rgba(255,255,255,.35) 0 1px, transparent 1px 3px),
+                 linear-gradient(120deg, #9aa3ab 0%, #dfe4e8 40%, #f5f7f8 50%, #c3cad0 64%, #9aa3ab 100%); }
+  .cat-body { padding: 14px 16px 16px; display: grid; gap: 12px; flex: 1; align-content: start; }
+  .cat-body .acciones { margin-top: auto; }
+  .cat-body a.btn, .cat-body a.btn-sec { text-decoration: none; display: block; }
+  .cat-body a.btn { color: var(--fondo); }
+  .cat-body a.btn-sec { color: var(--crema); }
+  .nota-encargo { margin-top: 16px; padding: 14px 16px; border: 1px solid var(--oro); border-radius: 12px; color: var(--crema); }
+  .nota-encargo strong { color: var(--oro); }
+
+  /* Quiénes somos */
+  .nosotros { max-width: 760px; display: grid; gap: 14px; }
+  .nosotros h3 { font-family: "Marcellus", serif; font-weight: 400; font-size: 1.5rem; line-height: 1.2; color: var(--oro); margin-top: 22px; }
+  .nosotros h3:first-child { margin-top: 0; }
+  .nosotros p { line-height: 1.7; }
+  .destacada { border-left: 2px solid var(--oro); padding-left: 16px; font-family: "Marcellus", serif; font-size: 1.2rem; line-height: 1.55 !important; }
+  .valores, .perfiles { list-style: none; display: grid; gap: 12px; }
+  @media (min-width: 720px) { .valores, .perfiles { grid-template-columns: 1fr 1fr; } }
+  .valores li, .perfiles li { background: var(--superficie); border: 1px solid var(--borde); border-radius: 14px; padding: 14px 16px; line-height: 1.6; color: var(--texto2); }
+  .valores strong, .perfiles strong { display: block; color: var(--oro); margin-bottom: 4px; }
+  .valores strong::before, .perfiles strong::before { content: "◆"; font-size: .7em; margin-right: 8px; vertical-align: 2px; }
+  .cierre { font-family: "Marcellus", serif; font-size: 1.3rem; line-height: 1.5 !important; text-align: center; color: var(--oro); margin-top: 22px; }
+
+  /* Catálogos en el panel */
+  .cat-admin { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .cat-admin h4 { font-family: "Marcellus", serif; font-weight: 400; font-size: 1.2rem; color: var(--oro); }
+  .cat-admin .acciones { grid-template-columns: repeat(3, 1fr); }
+  .estado-pdf { font-size: .88rem; color: var(--texto2); overflow-wrap: anywhere; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } html { scroll-behavior: auto; } }
 </style>
 </head>
 <body>
@@ -184,6 +232,11 @@
 <header class="top">
   <div class="marca"><img class="logo" alt=""><span id="marca"></span></div>
   <button class="btn-carrito" id="abrirCarrito">Carrito <span class="contador" id="contador">0</span></button>
+  <nav class="nav" aria-label="Secciones">
+    <a href="#tienda">Tienda</a>
+    <a href="#catalogos">Catálogos de oro y plata</a>
+    <a href="#nosotros">Quiénes somos</a>
+  </nav>
 </header>
 
 <section class="hero">
@@ -193,12 +246,44 @@
   <div class="redes" id="redes"></div>
 </section>
 
-<div class="filtros">
+<div class="filtros" id="tienda">
   <input class="buscar" id="buscar" type="search" placeholder="Buscar collares, anillos, relicarios…">
   <div class="chips" id="chips"></div>
 </div>
 
 <main class="grid" id="catalogo"></main>
+
+<section class="bloque" id="catalogos">
+  <h2>Catálogos de oro y plata</h2>
+  <p class="intro">Piezas por encargo que llegan cada temporada. Mira el catálogo y pídenos por WhatsApp la que te guste.</p>
+  <div class="catalogos" id="listaCatalogos"></div>
+  <p class="nota-encargo" id="notaEncargo"></p>
+</section>
+
+<section class="bloque" id="nosotros">
+  <h2>Quiénes somos</h2>
+  <div class="nosotros">
+    <h3>Nuestra Esencia: Elegancia que Empodera</h3>
+    <p>En LOUZE creemos que los accesorios no son un simple complemento; son una declaración de intenciones. Nacimos en San Cristóbal con una misión clara: acompañar a la mujer moderna en su día a día a través de piezas de joyería fina —collares, anillos y zarcillos— diseñadas para resistir el ritmo de su vida y realzar su presencia.</p>
+    <p class="destacada">Queremos que cada pieza sea un recordatorio tangible de tu propio valor. Porque cuando una mujer elige qué ponerse por la mañana, también está eligiendo cómo quiere pisar el mundo: con seguridad, con elegancia y con un poder inquebrantable.</p>
+
+    <h3>Nuestros Principios y Valores</h3>
+    <ul class="valores">
+      <li><strong>Autoridad y Presencia</strong>Diseñamos para que cada mujer sienta que ocupa su espacio con seguridad, luciendo accesorios que transmiten distinción y carácter.</li>
+      <li><strong>Calidad Duradera</strong>Apostamos por piezas resistentes y de excelente acabado (como el acero inoxidable), pensadas para acompañarte hoy, mañana y siempre, sin perder su brillo.</li>
+      <li><strong>Versatilidad Sofisticada</strong>Sabemos que tu agenda es dinámica. Por eso, nuestros accesorios están creados para adaptarse sin esfuerzo a cualquier momento, desde una reunión importante hasta una salida casual.</li>
+      <li><strong>Ambición sin Límites</strong>Creemos en las mujeres que sueñan en grande, que construyen su propio camino y que buscan sentirse inspiradas y poderosas en cada faceta de su vida.</li>
+    </ul>
+
+    <h3>¿Para quién es LOUZE?</h3>
+    <p>Nuestra comunidad está formada por mujeres auténticas, decididas y multifacéticas. LOUZE es para ti si te identificas con alguno de estos perfiles:</p>
+    <ul class="perfiles">
+      <li><strong>La joven estudiante y emprendedora</strong>Esa fuerza joven que equilibra los libros, los proyectos, los sueños de negocio y las ganas de comerse el mundo, buscando siempre un estilo que refleje su madurez y ambición.</li>
+      <li><strong>La mamá trabajadora</strong>Esa mujer imparable que lidera con el ejemplo, gestiona su tiempo con maestría y necesita sentirse cómoda, arreglada y segura de sí misma en cada rol que desempeña.</li>
+    </ul>
+    <p class="cierre">En definitiva, LOUZE es para la mujer que quiere sentirse bien en su propia piel, que valora la calidad y que busca en los detalles pequeños el impulso perfecto para sentirse poderosa y lista para conquistar cualquier meta.</p>
+  </div>
+</section>
 
 <footer>
   <p id="pie"></p>
@@ -343,6 +428,7 @@
     <button class="chip activo" data-tab="tabProductos">Productos</button>
     <button class="chip" data-tab="tabDelivery">Delivery</button>
     <button class="chip" data-tab="tabPagos">Pagos</button>
+    <button class="chip" data-tab="tabCatalogos">Catálogos</button>
     <button class="chip" data-tab="tabTienda">Tienda</button>
   </div>
 
@@ -371,6 +457,16 @@
     <p class="sub">Métodos de pago y la moneda en que se cobra cada uno:</p>
     <div id="listaPagos" class="lista"></div>
     <button class="btn-sec" id="nuevoPago">+ Agregar método</button>
+  </div>
+
+  <div class="seccion" id="tabCatalogos" hidden>
+    <p class="sub">Sube el PDF de cada catálogo cuando llegue la temporada nueva. Al subir otro, reemplaza al anterior.</p>
+    <div id="adminCatalogos" class="lista"></div>
+    <div class="form" style="margin-top:0">
+      <label>Observación que ven las clientas
+        <textarea id="cfgNotaCat" rows="3"></textarea>
+      </label>
+    </div>
   </div>
 
   <form class="seccion form" id="tabTienda" hidden>
@@ -471,6 +567,13 @@ const DATOS_INICIALES = {
     { nombre: "Efectivo", moneda: "COP", datos: "", referencia: "" },
     { nombre: "Efectivo", moneda: "USD", datos: "", referencia: "" },
   ],
+  // Catálogos por temporada. El PDF se sube desde el panel.
+  // archivo: ruta de un PDF publicado junto a la página (ej. "catalogos/oro.pdf"), para que lo vean todas las clientas
+  catalogos: [
+    { id: "oro", nombre: "Oro", temporada: "", archivo: "", pdfNombre: "", pdfTamano: 0, pdfFecha: "" },
+    { id: "plata", nombre: "Plata", temporada: "", archivo: "", pdfNombre: "", pdfTamano: 0, pdfFecha: "" },
+  ],
+  notaCatalogos: "Estos pedidos tardan 2 semanas en llegar. Para pedirlo pagas la mitad y la otra mitad la pagas al llegar el pedido.",
   // Precios en pesos colombianos. precio: null = el delivery se acuerda por WhatsApp
   zonas: [
     { nombre: "Abejal de Palmira", precio: 15000 },
@@ -925,7 +1028,102 @@ function renderTodo() {
   renderChips();
   renderOpcionesPedido();
   actualizar();
+  renderCatalogos();
 }
+
+// ---------- Catálogos de oro y plata ----------
+// Los PDF se guardan en IndexedDB (aguanta archivos grandes). Si el navegador no lo permite,
+// como en una vista previa, quedan en memoria mientras la página esté abierta.
+const pdfs = (() => {
+  const memoria = new Map();
+  const listo = new Promise(ok => {
+    try {
+      const r = indexedDB.open("louze-catalogos", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("pdfs");
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => ok(null);
+    } catch { ok(null); }
+  });
+  async function operar(modo, accion) {
+    const db = await listo;
+    if (!db) throw new Error("sin IndexedDB");
+    return new Promise((ok, mal) => {
+      const t = db.transaction("pdfs", modo);
+      const req = accion(t.objectStore("pdfs"));
+      t.oncomplete = () => ok(req.result);
+      t.onerror = t.onabort = () => mal(t.error);
+    });
+  }
+  return {
+    async leer(id) {
+      try { const b = await operar("readonly", s => s.get(id)); if (b) return b; } catch {}
+      return memoria.get(id) || null;
+    },
+    async guardar(id, blob) {   // devuelve true si quedó guardado de forma permanente
+      memoria.set(id, blob);
+      try { await operar("readwrite", s => s.put(blob, id)); return true; } catch { return false; }
+    },
+    async borrar(id) {
+      memoria.delete(id);
+      try { await operar("readwrite", s => s.delete(id)); } catch {}
+    },
+  };
+})();
+
+const urlsPdf = {};
+async function urlCatalogo(cat) {
+  const blob = await pdfs.leer(cat.id);
+  if (blob) {
+    if (!urlsPdf[cat.id] || urlsPdf[cat.id].blob !== blob) {
+      if (urlsPdf[cat.id]) URL.revokeObjectURL(urlsPdf[cat.id].url);
+      urlsPdf[cat.id] = { blob, url: URL.createObjectURL(blob) };
+    }
+    return urlsPdf[cat.id].url;
+  }
+  return cat.archivo || "";
+}
+
+const tamanoTexto = b => b >= 1048576 ? `${(b / 1048576).toLocaleString("es-VE", { maximumFractionDigits: 1 })} MB` : `${Math.max(1, Math.round(b / 1024))} KB`;
+const fechaCorta = iso => new Date(iso).toLocaleDateString("es-VE", { day: "numeric", month: "long" });
+
+async function renderCatalogos() {
+  const tarjetas = await Promise.all(datos.catalogos.map(async cat => {
+    const url = await urlCatalogo(cat);
+    const nombreArchivo = `Catálogo ${cat.nombre} Louze${cat.temporada ? " " + cat.temporada : ""}.pdf`;
+    return `<article class="cat-card">
+      <div class="metal ${esc(cat.id)}">${esc(cat.nombre)}</div>
+      <div class="cat-body">
+        <p class="sub">${cat.temporada ? `Temporada: ${esc(cat.temporada)}` : "Catálogo de la temporada"}</p>
+        ${url ? "" : `<p>El catálogo de esta temporada estará disponible pronto.</p>`}
+        <div class="acciones">
+          ${url
+            ? `<a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Ver catálogo</a>
+               <a class="btn-sec" href="${esc(url)}" download="${esc(nombreArchivo)}">Descargar</a>`
+            : ""}
+        </div>
+        <button type="button" class="btn-sec" data-pedir-cat="${esc(cat.id)}">${url ? "Pedir por WhatsApp" : "Preguntar por WhatsApp"}</button>
+      </div>
+    </article>`;
+  }));
+  $("#listaCatalogos").innerHTML = tarjetas.join("");
+  $("#notaEncargo").innerHTML = `<strong>Importante:</strong> ${esc(datos.notaCatalogos || "")}`;
+  $("#notaEncargo").hidden = !datos.notaCatalogos;
+}
+
+$("#listaCatalogos").addEventListener("click", e => {
+  const b = e.target.closest("[data-pedir-cat]");
+  if (!b) return;
+  const cat = datos.catalogos.find(c => c.id === b.dataset.pedirCat);
+  const nombre = `catálogo de ${cat.nombre.toLowerCase()}${cat.temporada ? ` (temporada ${cat.temporada})` : ""}`;
+  const texto = [
+    `¡Hola ${datos.tienda.nombre}! Quiero pedir del *${nombre}*.`,
+    "",
+    "*Producto (nombre o código y página):* ",
+    "",
+    "Ya leí las condiciones del pedido por catálogo.",
+  ].join("\n");
+  window.open(`https://wa.me/${datos.tienda.whatsapp}?text=${encodeURIComponent(texto)}`, "_blank");
+});
 
 function abrirCarrito(on) {
   $("#carrito").classList.toggle("on", on);
@@ -1254,6 +1452,7 @@ alEnviar($("#formPin"), () => {
   renderAdminProductos();
   renderAdminZonas();
   renderAdminPagos();
+  renderAdminCatalogos();
   llenarConfig();
   $("#panelAdmin").hidden = false;
   document.body.style.overflow = "hidden";
@@ -1270,7 +1469,7 @@ $("#tabsAdmin").addEventListener("click", e => {
   const b = e.target.closest("[data-tab]");
   if (!b) return;
   document.querySelectorAll("#tabsAdmin .chip").forEach(c => c.classList.toggle("activo", c === b));
-  ["tabProductos", "tabDelivery", "tabPagos", "tabTienda"].forEach(id => $("#" + id).hidden = id !== b.dataset.tab);
+  ["tabProductos", "tabDelivery", "tabPagos", "tabCatalogos", "tabTienda"].forEach(id => $("#" + id).hidden = id !== b.dataset.tab);
 });
 
 // Productos e inventario
@@ -1474,6 +1673,76 @@ $("#nuevoPago").onclick = () => {
   renderAdminPagos();
   $("#listaPagos").lastElementChild.querySelector("input").select();
 };
+
+// Catálogos: subir, cambiar o quitar el PDF de cada temporada
+async function renderAdminCatalogos() {
+  $("#cfgNotaCat").value = datos.notaCatalogos || "";
+  const filas = await Promise.all(datos.catalogos.map(async cat => {
+    const hay = !!(await pdfs.leer(cat.id));
+    const estado = hay
+      ? `PDF actual: ${esc(cat.pdfNombre || "catálogo.pdf")}${cat.pdfTamano ? ` (${tamanoTexto(cat.pdfTamano)})` : ""}${cat.pdfFecha ? `, subido el ${fechaCorta(cat.pdfFecha)}` : ""}`
+      : cat.archivo ? `PDF publicado: ${esc(cat.archivo)}` : "Todavía no hay PDF.";
+    return `<div class="fila-admin cat-admin">
+      <h4>Catálogo de ${esc(cat.nombre.toLowerCase())}</h4>
+      <div class="form" style="margin:0">
+        <label>Temporada (opcional)
+          <input data-cat="${esc(cat.id)}" data-campo="temporada" value="${esc(cat.temporada)}" placeholder="Ej: Navidad 2026">
+        </label>
+      </div>
+      <p class="estado-pdf">${estado}</p>
+      <div class="acciones">
+        <label class="btn" style="font-size:.88rem">${hay ? "Cambiar PDF" : "Subir PDF"}
+          <input type="file" accept="application/pdf,.pdf" data-subir="${esc(cat.id)}" hidden>
+        </label>
+        <button type="button" class="btn-sec" data-ver-pdf="${esc(cat.id)}" ${hay || cat.archivo ? "" : "disabled"}>Ver</button>
+        <button type="button" class="btn-sec peligro" data-quitar-pdf="${esc(cat.id)}" ${hay ? "" : "disabled"}>Quitar</button>
+      </div>
+    </div>`;
+  }));
+  $("#adminCatalogos").innerHTML = filas.join("");
+}
+
+$("#adminCatalogos").addEventListener("change", async e => {
+  const el = e.target;
+  if (el.dataset.campo === "temporada") {
+    datos.catalogos.find(c => c.id === el.dataset.cat).temporada = el.value.trim();
+    if (guardarDatos()) aviso("Temporada guardada");
+    return;
+  }
+  if (!el.dataset.subir) return;
+  const archivo = el.files[0];
+  if (!archivo) return;
+  if (!(archivo.type === "application/pdf" || /\.pdf$/i.test(archivo.name))) return aviso("El archivo tiene que ser un PDF");
+  if (archivo.size > 50 * 1048576) return aviso("El PDF pesa más de 50 MB. Comprímelo e inténtalo de nuevo.");
+  aviso("Subiendo catálogo…");
+  const permanente = await pdfs.guardar(el.dataset.subir, archivo);
+  const cat = datos.catalogos.find(c => c.id === el.dataset.subir);
+  Object.assign(cat, { pdfNombre: archivo.name, pdfTamano: archivo.size, pdfFecha: new Date().toISOString() });
+  guardarDatos();
+  aviso(permanente ? "Catálogo guardado" : "Catálogo cargado solo mientras esta página esté abierta");
+  renderAdminCatalogos();
+});
+
+$("#adminCatalogos").addEventListener("click", async e => {
+  const b = e.target.closest("button");
+  if (!b || b.disabled) return;
+  if (b.dataset.verPdf) {
+    const url = await urlCatalogo(datos.catalogos.find(c => c.id === b.dataset.verPdf));
+    if (url) window.open(url, "_blank");
+  }
+  if (b.dataset.quitarPdf) {
+    await pdfs.borrar(b.dataset.quitarPdf);
+    Object.assign(datos.catalogos.find(c => c.id === b.dataset.quitarPdf), { pdfNombre: "", pdfTamano: 0, pdfFecha: "" });
+    guardarDatos();
+    aviso("PDF quitado");
+    renderAdminCatalogos();
+  }
+});
+
+$("#cfgNotaCat").addEventListener("change", e => {
+  datos.notaCatalogos = e.target.value.trim();
+  if (guardarDatos()) aviso("Observación guardada");
+});
 
 // Datos de la tienda
 function llenarConfig() {
