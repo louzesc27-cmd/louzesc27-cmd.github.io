@@ -178,11 +178,40 @@
   .toast.on { opacity: 1; transform: translate(-50%, 0); }
   /* Menú de secciones */
   .top { flex-wrap: wrap; row-gap: 2px; }
-  .nav { flex-basis: 100%; display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; font-size: .88rem; }
+  .nav { flex-basis: 100%; display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none; font-size: .88rem; }
+  @media (max-width: 380px) { .nav { gap: 13px; font-size: .84rem; } }
   .nav a { color: var(--texto2); text-decoration: none; padding: 4px 0; white-space: nowrap; border-bottom: 2px solid transparent; }
   .nav a:hover, .nav a:focus-visible { color: var(--oro); border-color: var(--oro); }
   #tienda, #catalogos { scroll-margin-top: 104px; }
   .nav a[aria-current="page"] { color: var(--oro); border-color: var(--oro); }
+
+  /* Pedidos (Mis pedidos y panel) */
+  .pedidos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .pedido { background: var(--superficie); border: 1px solid var(--borde); border-radius: 14px; padding: 14px 16px; display: grid; gap: 8px; }
+  .pedido-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pedido-top strong { font-family: "Marcellus", serif; font-weight: 400; font-size: 1.2rem; color: var(--oro); letter-spacing: .03em; }
+  .pedido small, .pedido .detalle { color: var(--texto2); font-size: .85rem; }
+  .pedido ul { list-style: none; display: grid; gap: 6px; font-size: .92rem; }
+  .pedido .total-pedido { font-weight: 700; }
+  .pedido .nota-estado { font-size: .88rem; }
+  .estado { padding: 3px 10px; border-radius: 999px; font-size: .76rem; font-weight: 700; background: var(--hundido); color: var(--crema); border: 1px solid var(--borde); white-space: nowrap; }
+  .estado.nuevo { background: var(--oro); color: var(--fondo); border-color: var(--oro); }
+  .estado.confirmado, .estado.pagado, .estado.camino { color: var(--oro); border-color: var(--oro); }
+  .estado.entregado { background: var(--crema); color: var(--fondo); border-color: var(--crema); }
+  .estado.cancelado { color: var(--texto2); text-decoration: line-through; }
+  .fotos-pedido { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fotos-pedido a { display: grid; gap: 2px; justify-items: center; color: var(--oro); font-size: .72rem; }
+  .fotos-pedido img { width: 64px; height: 64px; object-fit: contain; background: #fff; border-radius: 8px; }
+  .pedido details summary { cursor: pointer; color: var(--oro); font-size: .88rem; }
+  .mensaje-pedido { margin-top: 8px; padding: 12px; border-radius: 10px; background: var(--hundido); font-size: .85rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .mensaje-pedido strong { color: var(--oro); }
+  .pedido select { padding: 8px 10px; border: 1px solid var(--borde); border-radius: 8px; background: var(--hundido); }
+  .pedido .acciones a { text-decoration: none; color: var(--crema); }
+  .pedidos > a.btn { text-decoration: none; color: var(--fondo); justify-self: center; }
+  .numero-pedido { font-family: "Marcellus", serif; font-size: 1.9rem; color: var(--oro); text-align: center; letter-spacing: .06em; }
+  .error { color: #ffb3bd; font-size: .88rem; }
+  .badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--crema); color: var(--fondo); font-size: .72rem; font-weight: 700; }
+  .titulo-seccion { font-family: "Marcellus", serif; font-weight: 400; font-size: 1.25rem; color: var(--oro); margin-top: 18px; }
   html { scroll-behavior: smooth; }
 
   /* Secciones de contenido */
@@ -242,8 +271,9 @@
   <button class="btn-carrito" id="abrirCarrito">Carrito <span class="contador" id="contador">0</span></button>
   <nav class="nav" aria-label="Secciones">
     <a href="#tienda">Tienda</a>
-    <a href="#catalogos">Catálogos de oro y plata</a>
+    <a href="#catalogos">Catálogos</a>
     <a href="#nosotros">Quiénes somos</a>
+    <a href="#mispedidos">Mis pedidos</a>
   </nav>
 </header>
 
@@ -284,6 +314,18 @@
     </div>
   </div>
 </article>
+
+<section id="vistaPedidos" hidden>
+  <section class="hero hero-nosotros">
+    <img class="logo logo-hero" alt="">
+    <h1>Mis pedidos</h1>
+    <p>Los pedidos que hiciste desde este teléfono y cómo va cada uno. No necesitas cuenta ni correo.</p>
+  </section>
+  <div class="pagina">
+    <div class="pedidos" id="listaMisPedidos"></div>
+    <p class="sub" style="margin-top:18px">Si haces un pedido desde otro teléfono o borras los datos del navegador, ese pedido no aparece aquí. Escríbenos por WhatsApp y te ayudamos.</p>
+  </div>
+</section>
 
 <footer>
   <p id="pie"></p>
@@ -398,12 +440,16 @@
 <!-- Envío de fotos -->
 <div class="modal" id="modalEnvio" hidden>
   <div class="caja">
-    <h3 id="tituloEnvio">Falta enviar la foto</h3>
-    <p class="sub">WhatsApp no deja adjuntar fotos desde un enlace, por eso son dos pasos.</p>
-    <button class="btn" id="irWhatsapp">1. Enviar pedido por WhatsApp</button>
-    <button class="btn" id="enviarFotos">2. Enviar las fotos</button>
-    <p class="sub" id="ayudaFotos"></p>
-    <div id="listaFotos" class="lista"></div>
+    <h3 id="tituloEnvio">¡Pedido registrado!</h3>
+    <p class="numero-pedido" id="numeroEnvio" hidden></p>
+    <p class="sub" id="textoEnvio"></p>
+    <button class="btn" id="irWhatsapp">Enviar pedido por WhatsApp</button>
+    <div class="lista" id="pasoFotos">
+      <button class="btn" id="enviarFotos">2. Enviar las fotos</button>
+      <p class="sub" id="ayudaFotos"></p>
+      <div id="listaFotos" class="lista"></div>
+    </div>
+    <a class="link" href="#mispedidos" id="verMisPedidos" hidden>Ver mis pedidos</a>
     <button class="btn-sec" id="cerrarEnvio">Listo</button>
   </div>
 </div>
@@ -412,8 +458,10 @@
 <div class="modal" id="modalPin" hidden>
   <form class="caja form" id="formPin">
     <h3>Acceso emprendedor</h3>
-    <p class="sub">Escribe tu clave para administrar la tienda.</p>
-    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Clave" required>
+    <p class="sub">Escribe tu código para ver los pedidos y administrar la tienda.</p>
+    <input type="email" autocomplete="username" value="louzesc27@gmail.com" readonly hidden>
+    <input id="pin" type="password" autocomplete="current-password" placeholder="Código" required>
+    <p class="error" id="errorPin" hidden></p>
     <div class="acciones">
       <button type="button" class="btn-sec" id="cancelarPin">Cancelar</button>
       <button type="submit" class="btn">Entrar</button>
@@ -428,7 +476,8 @@
     <button id="salirAdmin">Salir</button>
   </div>
   <div class="tabs" id="tabsAdmin">
-    <button class="chip activo" data-tab="tabProductos">Productos</button>
+    <button class="chip activo" data-tab="tabPedidos">Pedidos<span class="badge" id="badgePedidos" hidden></span></button>
+    <button class="chip" data-tab="tabProductos">Productos</button>
     <button class="chip" data-tab="tabDelivery">Delivery</button>
     <button class="chip" data-tab="tabPagos">Pagos</button>
     <button class="chip" data-tab="tabCatalogos">Catálogos</button>
@@ -436,7 +485,17 @@
     <button class="chip" data-tab="tabTienda">Tienda</button>
   </div>
 
-  <div class="seccion" id="tabProductos">
+  <div class="seccion" id="tabPedidos">
+    <div class="chips" id="filtroPedidos">
+      <button class="chip activo" data-filtro="activos">Por atender</button>
+      <button class="chip" data-filtro="entregado">Entregados</button>
+      <button class="chip" data-filtro="cancelado">Cancelados</button>
+      <button class="chip" data-filtro="todos">Todos</button>
+    </div>
+    <div class="pedidos" id="listaPedidos"></div>
+  </div>
+
+  <div class="seccion" id="tabProductos" hidden>
     <button class="btn" id="nuevoProducto">+ Nuevo producto</button>
     <p class="sub">Precios en pesos colombianos. Usa − y + para ajustar el stock cuando vendas o te llegue mercancía.</p>
     <div id="listaAdmin" class="lista"></div>
@@ -523,10 +582,24 @@
     <label>Días y hora de retiro
       <input id="cfgHorario" placeholder="Ej: Lunes a viernes, 5:30 p. m.">
     </label>
-    <label>Nueva clave (déjala vacía para no cambiarla)
-      <input id="cfgPin" type="password" inputmode="numeric" autocomplete="new-password">
-    </label>
     <button class="btn" type="submit">Guardar cambios</button>
+  </form>
+
+  <form class="seccion form" id="formCodigo" hidden>
+    <h3 class="titulo-seccion">Código de acceso</h3>
+    <p class="sub">Con este código entras al panel desde cualquier teléfono. Usa al menos 8 caracteres, mezclando letras y números.</p>
+    <input type="email" autocomplete="username" value="louzesc27@gmail.com" readonly hidden>
+    <label>Código actual
+      <input id="codActual" type="password" autocomplete="current-password" required>
+    </label>
+    <label>Código nuevo
+      <input id="codNuevo" type="password" autocomplete="new-password" minlength="8" required>
+    </label>
+    <label>Repite el código nuevo
+      <input id="codNuevo2" type="password" autocomplete="new-password" minlength="8" required>
+    </label>
+    <button class="btn" type="submit">Cambiar código</button>
+    <button class="btn-sec" type="button" id="cerrarSesion">Cerrar sesión en este teléfono</button>
   </form>
 </section>
 
@@ -586,7 +659,6 @@ const DATOS_INICIALES = {
     retiro: true,               // ofrecer retiro en persona
     puntoRetiro: "Gimnasio El Edén, Barrio Obrero",
     horarioRetiro: "Lunes a viernes, 5:30 p. m.",
-    pin: "1234",                // clave del panel (cámbiala desde el panel)
   },
   // Tasas del día: cuántos pesos vale 1 dólar y 1 bolívar (null = sin definir)
   // Bolívares: pesos ÷ tasa, redondeado (ej. 10.000 COP ÷ 2,9 = Bs 3.448)
@@ -732,6 +804,7 @@ function cargarDatos() {
         usd: guardado.tasas?.usd ?? base.tasas.usd,
         bs: guardado.tasas?.bs ?? base.tasas.bs,
       } };
+      delete d.tienda.pin;   // la clave vieja ya no se usa: ahora se entra con el código seguro
       if (!d.pagos.length || typeof d.pagos[0] === "string") d.pagos = base.pagos;   // formato anterior
       d.productos.forEach(p => {   // productos guardados con el formato anterior
         if (!Array.isArray(p.imagenes)) p.imagenes = p.img ? [p.img] : [];
@@ -1234,10 +1307,197 @@ $("#listaCatalogos").addEventListener("click", e => {
 });
 
 function abrirCarrito(on) {
+  if (on && carrito.length) nube().catch(() => {});   // adelanta la carga para que el pedido se registre rápido
   $("#carrito").classList.toggle("on", on);
   $("#capa").classList.toggle("on", on);
   document.body.style.overflow = on ? "hidden" : "";
 }
+
+// ---------- Pedidos guardados en la nube (Firebase) ----------
+// Cada pedido queda guardado: la clienta lo ve en "Mis pedidos" (sin cuenta ni correo) y Louze en su panel.
+// Esta configuración no es secreta; lo que protege los pedidos son las reglas publicadas en Firebase.
+const FIREBASE = {
+  apiKey: "AIzaSyCLYxmqSK4q3Y_cgdH5YYPKTKf4iWUbTp0",
+  authDomain: "louze-433f1.firebaseapp.com",
+  projectId: "louze-433f1",
+  storageBucket: "louze-433f1.firebasestorage.app",
+  messagingSenderId: "1040523037361",
+  appId: "1:1040523037361:web:c7768400b0f791d1e27090",
+};
+const CORREO_DUENA = "louzesc27@gmail.com";   // el panel solo pide el código; el correo va fijo
+const SDK_FIREBASE = "https://www.gstatic.com/firebasejs/13.1.0/";
+
+const ESTADOS = {
+  nuevo:      { nombre: "Recibido",   nota: "Recibimos tu pedido. Te confirmamos por WhatsApp." },
+  confirmado: { nombre: "Confirmado", nota: "Tu pedido está confirmado." },
+  pagado:     { nombre: "Pagado",     nota: "Recibimos tu pago." },
+  camino:     { nombre: "En camino",  nota: "Tu pedido va en camino.",
+                retiro: "Listo para retirar", notaRetiro: "Tu pedido te espera en el punto de encuentro." },
+  entregado:  { nombre: "Entregado",  nota: "Entregado. ¡Gracias por tu compra!" },
+  cancelado:  { nombre: "Cancelado",  nota: "Este pedido fue cancelado." },
+};
+const claveEstado = p => ESTADOS[p.estado] ? p.estado : "nuevo";
+const esRetiro = p => p.entrega?.tipo === "retiro";
+function nombreEstado(p, clave = claveEstado(p)) {
+  const e = ESTADOS[clave];
+  return esRetiro(p) && e.retiro ? e.retiro : e.nombre;
+}
+
+const conTiempo = (promesa, ms) => Promise.race([promesa, new Promise((_, mal) =>
+  setTimeout(() => mal(Object.assign(new Error("Sin respuesta"), { code: "tiempo" })), ms))]);
+
+// Carga Firebase solo cuando hace falta. Si no hay internet, la tienda sigue funcionando por WhatsApp.
+let nubeCargando = null;
+function nube() {
+  if (!nubeCargando) {
+    nubeCargando = Promise.all(["app", "auth", "firestore"].map(m => import(`${SDK_FIREBASE}firebase-${m}.js`)))
+      .then(async ([A, Au, F]) => {
+        const app = A.getApps()[0] || A.initializeApp(FIREBASE);
+        const auth = Au.getAuth(app);
+        await auth.authStateReady();   // recupera la sesión guardada en este teléfono
+        return { Au, F, auth, db: F.getFirestore(app) };
+      });
+    nubeCargando.catch(() => { nubeCargando = null; });   // se reintenta la próxima vez
+  }
+  return conTiempo(nubeCargando, 20000);
+}
+const esDuena = u => !!u && u.email === CORREO_DUENA;
+
+// Fotos de la clienta dentro del pedido: si pesan mucho se achican; si aun así no caben, van solo por WhatsApp
+const MAX_PESO_FOTOS = 700000;   // caracteres; cada pedido en Firebase admite hasta 1 MB
+function recomprimir(src, lado, calidad) {
+  return new Promise(ok => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, lado / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k);
+      c.height = Math.round(img.height * k);
+      const g = c.getContext("2d");
+      g.fillStyle = "#fff";
+      g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0, c.width, c.height);
+      ok(c.toDataURL("image/jpeg", calidad));
+    };
+    img.onerror = () => ok(src);
+    img.src = src;
+  });
+}
+async function fotosQueCaben(grupos) {   // una lista de fotos por cada producto con fotos
+  const peso = gs => gs.flat().reduce((s, f) => s + f.length, 0);
+  if (peso(grupos) <= MAX_PESO_FOTOS) return grupos;
+  for (const [lado, calidad] of [[600, 0.8], [480, 0.72], [360, 0.65]]) {
+    const menores = await Promise.all(grupos.map(g => Promise.all(g.map(f => recomprimir(f, lado, calidad)))));
+    if (peso(menores) <= MAX_PESO_FOTOS) return menores;
+  }
+  return null;
+}
+
+// Guarda el pedido del carrito y arma el mensaje de WhatsApp ya con su número
+async function registrarPedido() {
+  const { Au, F, auth, db } = await nube();
+  if (!auth.currentUser) await conTiempo(Au.signInAnonymously(auth), 20000);   // la clienta no necesita cuenta
+  const ref = F.doc(F.collection(db, "pedidos"));
+  const numero = ref.id.slice(0, 6).toUpperCase();
+  const conFotos = carrito.filter(l => l.fotos);
+  const fotos = conFotos.length ? await fotosQueCaben(conFotos.map(l => l.fotos)) : [];
+  const fotosGuardadas = conFotos.length > 0 && !!fotos;
+  const { subtotal, zona, total } = totales();
+  const pago = pagoElegido();
+  let k = 0;
+  const pedido = {
+    numero,
+    uid: auth.currentUser.uid,
+    estado: "nuevo",
+    creado: F.serverTimestamp(),
+    cliente: { nombre: $("#nombre").value.trim(), telefono: $("#telefono").value.trim() },
+    items: carrito.map(l => {
+      const p = prod(l.id);
+      return { nombre: p.nombre, cant: l.cant, precio: p.precio, fotos: l.fotos && fotosGuardadas ? fotos[k++] : [] };
+    }),
+    subtotal,
+    total,
+    envioAconvenir: zona.precio === null,
+    entrega: zona.retiro
+      ? { tipo: "retiro", lugar: datos.tienda.puntoRetiro }
+      : { tipo: "delivery", zona: zona.nombre, precio: zona.precio,
+          ubicacion: $("#ubicacion").value.trim(), referencia: $("#direccion").value.trim() },
+    cuando: textoCuando(zona),
+    pago: { metodo: pago.nombre, moneda: pago.moneda, referencia: $("#referencia").value.trim() },
+    fotosPendientes: conFotos.length > 0 && !fotosGuardadas,
+    mensaje: mensajePedido({ numero, fotosGuardadas }),
+  };
+  await conTiempo(F.setDoc(ref, pedido), 25000);
+  return { numero, fotosGuardadas, mensaje: pedido.mensaje };
+}
+
+// Lo que viene de la nube se muestra con cuidado: lo escribió una clienta
+const txt = v => esc(v == null ? "" : v);
+const num = v => Number.isFinite(+v) ? +v : 0;
+const fotoValida = f => typeof f === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(f);
+const enlaceSeguro = u => typeof u === "string" && /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : "";
+const itemsDe = p => Array.isArray(p.items) ? p.items.filter(i => i && typeof i === "object") : [];
+const numeroDe = p => String(p.numero || p.id.slice(0, 6)).replace(/[^a-z0-9]/gi, "").toUpperCase();
+const msDe = p => typeof p.creado?.toMillis === "function" ? p.creado.toMillis() : Date.now();
+const fechaPedido = p => new Date(msDe(p)).toLocaleString("es-VE",
+  { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const docsDe = snap => snap.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) }));
+
+// Número de la clienta para abrir su chat (Venezuela 0414…, Colombia 310…)
+function telefonoWsp(t) {
+  const d = String(t || "").replace(/\D/g, "");
+  if (/^0\d{10}$/.test(d)) return "58" + d.slice(1);
+  if (/^4\d{9}$/.test(d)) return "58" + d;
+  if (/^3\d{9}$/.test(d)) return "57" + d;
+  return d.length >= 11 ? d : "";
+}
+
+// ---------- Mis pedidos (la clienta) ----------
+let cortarMisPedidos = null, turnoMisPedidos = 0;
+function cerrarMisPedidos() {
+  turnoMisPedidos++;
+  if (cortarMisPedidos) cortarMisPedidos();
+  cortarMisPedidos = null;
+}
+async function abrirMisPedidos() {
+  cerrarMisPedidos();
+  const turno = turnoMisPedidos;
+  $("#listaMisPedidos").innerHTML = `<p class="vacio">Cargando tus pedidos…</p>`;
+  try {
+    const { F, auth, db } = await nube();
+    if (turno !== turnoMisPedidos) return;
+    const u = auth.currentUser;
+    if (!u) return pintarMisPedidos([]);   // nunca ha pedido desde este teléfono
+    cortarMisPedidos = F.onSnapshot(F.query(F.collection(db, "pedidos"), F.where("uid", "==", u.uid)),
+      snap => pintarMisPedidos(docsDe(snap)), errorMisPedidos);
+  } catch (e) {
+    if (turno === turnoMisPedidos) errorMisPedidos();
+  }
+}
+function errorMisPedidos() {
+  $("#listaMisPedidos").innerHTML = `<p class="vacio">No se pudieron cargar tus pedidos. Revisa tu conexión.</p>
+    <button class="btn-sec" id="reintentarMisPedidos">Intentar de nuevo</button>`;
+}
+function pintarMisPedidos(lista) {
+  lista.sort((a, b) => msDe(b) - msDe(a));
+  $("#listaMisPedidos").innerHTML = lista.map(p => {
+    const e = ESTADOS[claveEstado(p)];
+    const consulta = `¡Hola ${datos.tienda.nombre}! Te escribo por mi pedido N° ${numeroDe(p)}.`;
+    return `<article class="pedido">
+      <div class="pedido-top"><strong>N° ${numeroDe(p)}</strong><span class="estado ${claveEstado(p)}">${esc(nombreEstado(p))}</span></div>
+      <small>Pedido el ${esc(fechaPedido(p))}</small>
+      <p class="nota-estado">${esc(esRetiro(p) && e.notaRetiro ? e.notaRetiro : e.nota)}</p>
+      <ul>${itemsDe(p).map(i => `<li>${num(i.cant)} × ${txt(i.nombre)}</li>`).join("")}</ul>
+      <p class="total-pedido">Total: ${dinero(num(p.total))}${p.envioAconvenir ? " + delivery" : ""}</p>
+      <p class="detalle">${esRetiro(p) ? "Punto de encuentro" : `Delivery a ${txt(p.entrega?.zona)}`}: ${txt(p.cuando)}</p>
+      <a class="link" href="https://wa.me/${datos.tienda.whatsapp}?text=${encodeURIComponent(consulta)}" target="_blank" rel="noopener">Escribir a ${esc(datos.tienda.nombre)} por este pedido</a>
+    </article>`;
+  }).join("") || `<p class="vacio">Aún no has hecho pedidos desde este teléfono.</p>
+    <a class="btn" href="#tienda">Ir a la tienda</a>`;
+}
+$("#listaMisPedidos").addEventListener("click", e => {
+  if (e.target.id === "reintentarMisPedidos") abrirMisPedidos();
+});
 
 // ---------- Pedido por WhatsApp ----------
 // Fecha y hora en palabras: "jueves, 13 de noviembre" y "3:00 p. m."
@@ -1247,7 +1507,16 @@ function horaTexto(h) {
   return `${H % 12 || 12}:${String(M).padStart(2, "0")} ${H < 12 ? "a. m." : "p. m."}`;
 }
 
-function mensajePedido() {
+// "jueves, 13 de noviembre a las 5:30 p. m." (retiro) o "jueves, 13 de noviembre, 3:00 p. m." (delivery)
+function textoCuando(zona) {
+  const fecha = fechaTexto($("#fecha").value);
+  if (!zona.retiro) return `${fecha}, ${horaTexto($("#hora").value)}`;
+  const hora = (datos.tienda.horarioRetiro.match(/\d{1,2}(:\d{2})?\s*[ap]\.?\s?m\.?/i) || [""])[0];
+  return fecha + (hora ? ` a las ${hora}` : "");
+}
+
+// extra.numero: número del pedido registrado; extra.fotosGuardadas: las fotos ya quedaron con el pedido
+function mensajePedido(extra = {}) {
   const { subtotal, zona, total } = totales();
   const cop = n => `${n.toLocaleString("es-CO")} COP`;   // en el mensaje, montos en pesos con "COP" para que no se confundan con dólares
   const t = texto => `*${texto}*`;                        // negrita en WhatsApp
@@ -1287,11 +1556,7 @@ function mensajePedido() {
        ...(referencia ? [`${t("Referencia:")} ${referencia}`] : [])];
 
   // Fecha y hora
-  const fecha = fechaTexto($("#fecha").value);
-  const horaRetiro = (datos.tienda.horarioRetiro.match(/\d{1,2}(:\d{2})?\s*[ap]\.?\s?m\.?/i) || [""])[0];
-  const cuando = zona.retiro
-    ? `${t("Fecha y hora de retiro:")} ${t(fecha + (horaRetiro ? ` a las ${horaRetiro}` : ""))}`
-    : `${t("Fecha y hora del delivery:")} ${t(`${fecha}, ${horaTexto($("#hora").value)}`)}`;
+  const cuando = `${t(zona.retiro ? "Fecha y hora de retiro:" : "Fecha y hora del delivery:")} ${t(textoCuando(zona))}`;
 
   const efectivo = /efectivo/i.test(pago.nombre);
   const v = calcularVuelto();
@@ -1302,6 +1567,7 @@ function mensajePedido() {
 
   return [
     `¡Hola ${datos.tienda.nombre}! Quiero hacer este pedido:`,
+    ...(extra.numero ? ["", `${t("Pedido N°:")} ${t(extra.numero)}`] : []),
     "",
     `${t("Nombre:")} ${$("#nombre").value.trim()}`,
     `${t("Número de teléfono:")} ${$("#telefono").value.trim()}`,
@@ -1315,7 +1581,9 @@ function mensajePedido() {
     cuando,
     `${t("¿Necesitas vuelto?:")} ${vuelto}`,
     ...(efectivo && pago.moneda === "USD" ? ["", `${t("Voy a pagar en dólares:")} te envío la foto del billete para que confirmes que está en buen estado.`] : []),
-    ...(f ? ["", `${t(f > 1 ? `Fotos para personalizar (${f}):` : "Foto para personalizar:")} te ${f > 1 ? "las" : "la"} envío en el siguiente mensaje.`] : []),
+    ...(f ? ["", `${t(f > 1 ? `Fotos para personalizar (${f}):` : "Foto para personalizar:")} ${extra.fotosGuardadas
+      ? `${f > 1 ? "quedaron guardadas" : "quedó guardada"} con el pedido N° ${extra.numero}.`
+      : `te ${f > 1 ? "las" : "la"} envío en el siguiente mensaje.`}`] : []),
   ].join("\n");
 }
 
@@ -1585,7 +1853,8 @@ $("#miUbicacion").onclick = () => {
 };
 $("#vaciar").onclick = () => { carrito = []; actualizar(); };
 
-alEnviar($("#formPedido"), () => {
+let enviandoPedido = false;
+alEnviar($("#formPedido"), async () => {
   const { zona } = totales();
   if (/efectivo/i.test(pagoElegido().nombre) && ["falta", "invalido"].includes(calcularVuelto().estado)) {
     $("#vuelto").focus();
@@ -1604,54 +1873,131 @@ alEnviar($("#formPedido"), () => {
     $("#ubicacion").focus();
     return aviso("Comparte tu ubicación o pega el enlace de Google Maps");
   }
-  const url = `https://wa.me/${datos.tienda.whatsapp}?text=${encodeURIComponent(mensajePedido())}`;
+  if (enviandoPedido) return;
+  enviandoPedido = true;
+  const boton = $("#formPedido [type=submit]");
+  boton.disabled = true;
+  boton.textContent = "Registrando tu pedido…";
   // Todas las fotos de la clienta, numeradas igual que en el mensaje
   const fotos = carrito.filter(l => l.fotos).flatMap(l =>
     l.fotos.map((src, k) => ({ src, texto: prod(l.id).nombre + (l.fotos.length > 1 ? `, lado ${k + 1}` : "") })));
-  if (!fotos.length) return window.open(url, "_blank");
-
-  $("#tituloEnvio").textContent = fotos.length > 1 ? "Faltan enviar las fotos" : "Falta enviar la foto";
-  $("#irWhatsapp").onclick = () => window.open(url, "_blank");
-
-  // Los archivos se preparan desde ya para que al tocar el botón se abra el menú de compartir al instante
-  const archivos = fotos.map((ft, i) => archivoDesdeDataURL(ft.src, `foto-${i + 1}.jpg`));
-  const compartir = puedeCompartir(archivos);
-  const varias = archivos.length > 1;
-  $("#enviarFotos").textContent = compartir
-    ? `2. Enviar ${varias ? `las ${archivos.length} fotos` : "la foto"}`
-    : `2. Descargar ${varias ? "las fotos" : "la foto"}`;
-  $("#ayudaFotos").textContent = compartir
-    ? `Después de enviar el pedido, vuelve aquí y toca el paso 2. Elige WhatsApp y luego el chat de ${datos.tienda.nombre}.`
-    : `Después de enviar el pedido, descarga ${varias ? "las fotos y adjúntalas" : "la foto y adjúntala"} en el chat de ${datos.tienda.nombre}.`;
-  $("#enviarFotos").onclick = () => compartirArchivos(archivos);
-  $("#listaFotos").innerHTML = fotos.map((ft, i) => `
-    <div class="paso">
-      <img src="${ft.src}" alt="">
-      <div class="item-info"><small class="sub" style="display:block">Foto #${i + 1}: ${esc(ft.texto)}</small>
-        ${varias ? `<button class="quitar" data-foto="${i}">Enviar solo esta</button>` : ""}
-      </div>
-    </div>`).join("");
-  $("#listaFotos").onclick = ev => {
-    const b = ev.target.closest("[data-foto]");
-    if (b) compartirArchivos([archivos[+b.dataset.foto]]);
-  };
-  $("#modalEnvio").hidden = false;
+  let registro = null;
+  try {
+    registro = await registrarPedido();
+  } catch (e) {
+    console.warn("No se pudo registrar el pedido:", e);   // igual se puede enviar por WhatsApp
+  }
+  const mensaje = registro ? registro.mensaje : mensajePedido();
+  boton.disabled = false;
+  boton.textContent = "Enviar pedido por WhatsApp";
+  enviandoPedido = false;
+  if (registro) {   // ya quedó guardado: se vacía el carrito
+    carrito = [];
+    actualizar();
+    abrirCarrito(false);
+  }
+  mostrarEnvio(`https://wa.me/${datos.tienda.whatsapp}?text=${encodeURIComponent(mensaje)}`, fotos, registro);
 });
+
+// Después de tocar "Enviar": número del pedido, botón de WhatsApp y, si hace falta, las fotos.
+// WhatsApp se abre con un toque nuevo porque el teléfono bloquea abrirlo después de esperar.
+function mostrarEnvio(url, fotos, registro) {
+  const varias = fotos.length > 1;
+  const pasos = fotos.length > 0 && !registro?.fotosGuardadas;   // las fotos tienen que ir por WhatsApp
+  $("#tituloEnvio").textContent = registro ? "¡Pedido registrado!" : "Envía tu pedido por WhatsApp";
+  $("#numeroEnvio").hidden = !registro;
+  $("#numeroEnvio").textContent = registro ? `N° ${registro.numero}` : "";
+  $("#textoEnvio").textContent = (registro
+    ? `Ahora envíalo por WhatsApp para que ${datos.tienda.nombre} lo confirme.` +
+      (registro.fotosGuardadas ? (varias ? " Tus fotos ya quedaron guardadas con el pedido." : " Tu foto ya quedó guardada con el pedido.") : "") +
+      " Puedes ver cómo va en Mis pedidos."
+    : "No pudimos guardarlo en Mis pedidos (revisa tu conexión), pero puedes enviarlo por WhatsApp igual.") +
+    (pasos ? " WhatsApp no deja adjuntar fotos desde un enlace, por eso son dos pasos." : "");
+  $("#irWhatsapp").textContent = pasos ? "1. Enviar pedido por WhatsApp" : "Enviar pedido por WhatsApp";
+  $("#irWhatsapp").onclick = () => window.open(url, "_blank");
+  $("#verMisPedidos").hidden = !registro;
+  $("#pasoFotos").hidden = !fotos.length;
+  if (fotos.length) {
+    // Los archivos se preparan desde ya para que al tocar el botón se abra el menú de compartir al instante
+    const archivos = fotos.map((ft, i) => archivoDesdeDataURL(ft.src, `foto-${i + 1}.jpg`));
+    const compartir = puedeCompartir(archivos);
+    const cuales = varias ? `las ${archivos.length} fotos` : "la foto";
+    $("#enviarFotos").className = pasos ? "btn" : "btn-sec";
+    $("#enviarFotos").textContent = pasos
+      ? (compartir ? `2. Enviar ${cuales}` : `2. Descargar ${varias ? "las fotos" : "la foto"}`)
+      : `También enviar ${cuales} por WhatsApp (opcional)`;
+    $("#ayudaFotos").hidden = !pasos;
+    $("#ayudaFotos").textContent = compartir
+      ? `Después de enviar el pedido, vuelve aquí y toca el paso 2. Elige WhatsApp y luego el chat de ${datos.tienda.nombre}.`
+      : `Después de enviar el pedido, descarga ${varias ? "las fotos y adjúntalas" : "la foto y adjúntala"} en el chat de ${datos.tienda.nombre}.`;
+    $("#enviarFotos").onclick = () => compartirArchivos(archivos);
+    $("#listaFotos").hidden = !pasos;
+    $("#listaFotos").innerHTML = fotos.map((ft, i) => `
+      <div class="paso">
+        <img src="${ft.src}" alt="">
+        <div class="item-info"><small class="sub" style="display:block">Foto #${i + 1}: ${esc(ft.texto)}</small>
+          ${varias ? `<button class="quitar" data-foto="${i}">Enviar solo esta</button>` : ""}
+        </div>
+      </div>`).join("");
+    $("#listaFotos").onclick = ev => {
+      const b = ev.target.closest("[data-foto]");
+      if (b) compartirArchivos([archivos[+b.dataset.foto]]);
+    };
+  }
+  $("#modalEnvio").hidden = false;
+}
 $("#cerrarEnvio").onclick = () => $("#modalEnvio").hidden = true;
+$("#verMisPedidos").onclick = () => $("#modalEnvio").hidden = true;
 
 // ---------- Acceso emprendedor ----------
+// Entra con su código seguro (es la contraseña de louzesc27@gmail.com en Firebase).
+// En su teléfono queda la sesión abierta hasta que toque "Cerrar sesión".
 function pedirClave() {
   $("#pin").value = "";
+  $("#errorPin").hidden = true;
   $("#modalPin").hidden = false;
   $("#pin").focus();
+  nube().then(({ auth }) => {   // si ya entró antes en este teléfono, pasa directo
+    if (esDuena(auth.currentUser) && !$("#modalPin").hidden) abrirPanel();
+  }).catch(() => {});
+}
+
+function errorAcceso(e) {
+  const c = String(e?.code || "");
+  if (/invalid-credential|wrong-password|user-not-found|invalid-login|missing-password/.test(c)) return "Código incorrecto.";
+  if (c.includes("too-many-requests")) return "Demasiados intentos. Espera unos minutos y vuelve a intentar.";
+  if (c.includes("operation-not-allowed")) return "Falta activar el acceso con correo y contraseña en Firebase.";
+  if (c.includes("weak-password")) return "Ese código es muy corto.";
+  if (c.includes("requires-recent-login")) return "Por seguridad, cierra sesión, vuelve a entrar y repite el cambio.";
+  if (!c || c === "tiempo" || c.includes("network")) return "Sin conexión. Revisa tu internet y vuelve a intentar.";
+  return `No se pudo entrar (${c}).`;
 }
 
 $("#entrarAdmin").onclick = pedirClave;
 $("#cancelarPin").onclick = () => $("#modalPin").hidden = true;
 
-alEnviar($("#formPin"), () => {
-  if ($("#pin").value !== datos.tienda.pin) return aviso("Clave incorrecta");
+alEnviar($("#formPin"), async () => {
+  const boton = $("#formPin [type=submit]");
+  if (boton.disabled) return;
+  boton.disabled = true;
+  boton.textContent = "Entrando…";
+  $("#errorPin").hidden = true;
+  try {
+    const { Au, auth } = await nube();
+    await conTiempo(Au.signInWithEmailAndPassword(auth, CORREO_DUENA, $("#pin").value), 20000);
+    abrirPanel();
+  } catch (e) {
+    $("#errorPin").textContent = errorAcceso(e);
+    $("#errorPin").hidden = false;
+  } finally {
+    boton.disabled = false;
+    boton.textContent = "Entrar";
+  }
+});
+
+function abrirPanel() {
   $("#modalPin").hidden = true;
+  $("#pin").value = "";
   abrirCarrito(false);
   renderAdminProductos();
   renderAdminZonas();
@@ -1659,11 +2005,141 @@ alEnviar($("#formPin"), () => {
   renderAdminCatalogos();
   renderAdminNosotros();
   llenarConfig();
+  $("#tabsAdmin [data-tab='tabPedidos']").click();   // siempre abre en los pedidos
   $("#panelAdmin").hidden = false;
   document.body.style.overflow = "hidden";
+  escucharPedidos();
+}
+
+// ---------- Pedidos de todas las clientas (panel) ----------
+let pedidosDuena = [], filtroPedidos = "activos", cortarPedidos = null, turnoPedidos = 0;
+function dejarDeEscucharPedidos() {
+  turnoPedidos++;
+  if (cortarPedidos) cortarPedidos();
+  cortarPedidos = null;
+}
+async function escucharPedidos() {
+  dejarDeEscucharPedidos();
+  const turno = turnoPedidos;
+  $("#listaPedidos").innerHTML = `<p class="vacio">Cargando pedidos…</p>`;
+  try {
+    const { F, db } = await nube();
+    if (turno !== turnoPedidos) return;
+    cortarPedidos = F.onSnapshot(F.query(F.collection(db, "pedidos"), F.orderBy("creado", "desc"), F.limit(300)),
+      snap => { pedidosDuena = docsDe(snap); renderPedidos(); },
+      e => { cortarPedidos = null; errorPedidos(e); });
+  } catch (e) {
+    if (turno === turnoPedidos) errorPedidos(e);
+  }
+}
+function errorPedidos(e) {
+  const permiso = String(e?.code || "").includes("permission");
+  $("#listaPedidos").innerHTML = `<p class="vacio">${permiso
+      ? "Tu sesión no tiene permiso para ver los pedidos. Cierra sesión y vuelve a entrar."
+      : "No se pudieron cargar los pedidos. Revisa tu conexión."}</p>
+    <button class="btn-sec" id="reintentarPedidos">Intentar de nuevo</button>`;
+}
+
+function renderPedidos() {
+  const nuevos = pedidosDuena.filter(p => claveEstado(p) === "nuevo").length;
+  $("#badgePedidos").hidden = !nuevos;
+  $("#badgePedidos").textContent = nuevos;
+  const abiertos = [...document.querySelectorAll("#listaPedidos details[open]")].map(d => d.dataset.id);
+  const lista = pedidosDuena.filter(p => filtroPedidos === "todos" ? true
+    : filtroPedidos === "activos" ? !["entregado", "cancelado"].includes(claveEstado(p))
+    : claveEstado(p) === filtroPedidos);
+  $("#listaPedidos").innerHTML = lista.map(tarjetaPedido).join("") ||
+    `<p class="vacio">${filtroPedidos === "activos" ? "No hay pedidos por atender." : "No hay pedidos aquí."}</p>`;
+  abiertos.forEach(id => {
+    const d = [...document.querySelectorAll("#listaPedidos details")].find(x => x.dataset.id === id);
+    if (d) d.open = true;
+  });
+}
+
+// El mensaje tal como llegó por WhatsApp, con los títulos en negrita
+const mensajeHtml = m => esc(typeof m === "string" ? m : "")
+  .replace(/\*([^*\n]+)\*/g, "<strong>$1</strong>")
+  .replace(/https:\/\/[^\s<]+/g, u => `<a class="link" href="${u}" target="_blank" rel="noopener">${u}</a>`);
+
+function tarjetaPedido(p) {
+  const id = esc(p.id), n = numeroDe(p), e = p.entrega || {};
+  const tel = telefonoWsp(p.cliente?.telefono);
+  const mapa = enlaceSeguro(e.ubicacion);
+  const nombre = String(p.cliente?.nombre || "").trim().split(/\s+/)[0];
+  const avisoTexto = `¡Hola${nombre ? " " + nombre : ""}! Te escribimos de ${datos.tienda.nombre}. Tu pedido N° ${n} está: *${nombreEstado(p)}*.`;
+  let f = 0;
+  return `<article class="pedido">
+    <div class="pedido-top">
+      <strong>N° ${n}</strong>
+      <select data-estado="${id}" aria-label="Estado del pedido N° ${n}">${Object.keys(ESTADOS).map(k =>
+        `<option value="${k}"${k === claveEstado(p) ? " selected" : ""}>${esc(nombreEstado(p, k))}</option>`).join("")}</select>
+    </div>
+    <small>${esc(fechaPedido(p))}</small>
+    <div><strong>${txt(p.cliente?.nombre)}</strong> · ${tel
+      ? `<a class="link" href="https://wa.me/${tel}" target="_blank" rel="noopener">${txt(p.cliente?.telefono)}</a>`
+      : txt(p.cliente?.telefono)}</div>
+    <ul>${itemsDe(p).map(i => {
+      const fotos = Array.isArray(i.fotos) ? i.fotos.filter(fotoValida) : [];
+      return `<li>${num(i.cant)} × ${txt(i.nombre)}: ${dinero(num(i.precio) * num(i.cant))}${fotos.length ? `
+        <div class="fotos-pedido">${fotos.map((src, k) => `<a href="${src}" download="pedido-${n}-foto-${++f}.jpg">
+          <img src="${src}" alt="Foto ${f}">${fotos.length > 1 ? `Lado ${k + 1}` : "Descargar"}</a>`).join("")}</div>` : ""}</li>`;
+    }).join("")}</ul>
+    ${p.fotosPendientes ? `<p class="detalle">Las fotos llegan por WhatsApp.</p>` : ""}
+    <p class="total-pedido">Total: ${dinero(num(p.total))}${p.envioAconvenir ? " + delivery" : ""} · ${txt(p.pago?.metodo)}</p>
+    <p class="detalle">${esRetiro(p) ? `Punto de encuentro: ${txt(e.lugar)}` : `Delivery: ${txt(e.zona)}`} · ${txt(p.cuando)}</p>
+    ${mapa ? `<a class="link" href="${esc(mapa)}" target="_blank" rel="noopener">Ver ubicación en Google Maps</a>` : ""}
+    <details data-id="${id}"><summary>Ver pedido completo</summary><div class="mensaje-pedido">${mensajeHtml(p.mensaje)}</div></details>
+    <div class="acciones">
+      ${tel ? `<a class="btn-sec" href="https://wa.me/${tel}?text=${encodeURIComponent(avisoTexto)}" target="_blank" rel="noopener">Avisar por WhatsApp</a>` : "<span></span>"}
+      <button class="btn-sec" data-borrar="${id}">Borrar</button>
+    </div>
+  </article>`;
+}
+
+$("#filtroPedidos").addEventListener("click", e => {
+  const b = e.target.closest("[data-filtro]");
+  if (!b) return;
+  filtroPedidos = b.dataset.filtro;
+  document.querySelectorAll("#filtroPedidos .chip").forEach(c => c.classList.toggle("activo", c === b));
+  renderPedidos();
+});
+
+$("#listaPedidos").addEventListener("change", async e => {
+  const s = e.target.closest("[data-estado]");
+  if (!s) return;
+  try {
+    const { F, db } = await nube();
+    await conTiempo(F.updateDoc(F.doc(db, "pedidos", s.dataset.estado), { estado: s.value, actualizado: F.serverTimestamp() }), 20000);
+    aviso(`Pedido marcado como ${s.options[s.selectedIndex].text.toLowerCase()}`);
+  } catch (err) {
+    aviso("No se pudo cambiar. Revisa tu conexión.");
+    renderPedidos();
+  }
+});
+
+$("#listaPedidos").addEventListener("click", async e => {
+  if (e.target.id === "reintentarPedidos") return escucharPedidos();
+  const b = e.target.closest("[data-borrar]");
+  if (!b) return;
+  if (!b.dataset.seguro) {   // se confirma con un segundo toque
+    b.dataset.seguro = "1";
+    b.textContent = "¿Seguro? Toca otra vez";
+    setTimeout(() => { if (b.isConnected) { delete b.dataset.seguro; b.textContent = "Borrar"; } }, 4000);
+    return;
+  }
+  b.disabled = true;
+  try {
+    const { F, db } = await nube();
+    await conTiempo(F.deleteDoc(F.doc(db, "pedidos", b.dataset.borrar)), 20000);
+    aviso("Pedido borrado");
+  } catch (err) {
+    aviso("No se pudo borrar. Revisa tu conexión.");
+    b.disabled = false;
+  }
 });
 
 $("#salirAdmin").onclick = () => {
+  dejarDeEscucharPedidos();
   $("#panelAdmin").hidden = true;
   document.body.style.overflow = "";
   carrito = carrito.filter(l => prod(l.id));   // quita del carrito lo que se haya eliminado
@@ -1674,7 +2150,8 @@ $("#tabsAdmin").addEventListener("click", e => {
   const b = e.target.closest("[data-tab]");
   if (!b) return;
   document.querySelectorAll("#tabsAdmin .chip").forEach(c => c.classList.toggle("activo", c === b));
-  ["tabProductos", "tabDelivery", "tabPagos", "tabCatalogos", "tabNosotros", "tabTienda"].forEach(id => $("#" + id).hidden = id !== b.dataset.tab);
+  ["tabPedidos", "tabProductos", "tabDelivery", "tabPagos", "tabCatalogos", "tabNosotros", "tabTienda"].forEach(id => $("#" + id).hidden = id !== b.dataset.tab);
+  $("#formCodigo").hidden = b.dataset.tab !== "tabTienda";
 });
 
 // Productos e inventario
@@ -2015,7 +2492,6 @@ function llenarConfig() {
   $("#cfgRetiro").checked = t.retiro;
   $("#cfgPunto").value = t.puntoRetiro || "";
   $("#cfgHorario").value = t.horarioRetiro || "";
-  $("#cfgPin").value = "";
 }
 
 alEnviar($("#tabTienda"), () => {
@@ -2027,10 +2503,45 @@ alEnviar($("#tabTienda"), () => {
   t.retiro = $("#cfgRetiro").checked;
   t.puntoRetiro = $("#cfgPunto").value.trim();
   t.horarioRetiro = $("#cfgHorario").value.trim();
-  if ($("#cfgPin").value) t.pin = $("#cfgPin").value;
   if (guardarDatos()) aviso("Cambios guardados");
   llenarConfig();
 });
+
+// Código de acceso: se cambia en Firebase, así sirve en cualquier teléfono
+alEnviar($("#formCodigo"), async () => {
+  const actual = $("#codActual").value, nuevo = $("#codNuevo").value;
+  if (nuevo !== $("#codNuevo2").value) return aviso("Los códigos nuevos no coinciden");
+  if (nuevo === actual) return aviso("El código nuevo es igual al actual");
+  const boton = $("#formCodigo [type=submit]");
+  if (boton.disabled) return;
+  boton.disabled = true;
+  boton.textContent = "Cambiando…";
+  try {
+    const { Au, auth } = await nube();
+    const u = auth.currentUser;
+    if (!esDuena(u)) throw { code: "auth/requires-recent-login" };
+    await conTiempo(Au.reauthenticateWithCredential(u, Au.EmailAuthProvider.credential(CORREO_DUENA, actual)), 20000);
+    await conTiempo(Au.updatePassword(u, nuevo), 20000);
+    $("#formCodigo").reset();
+    aviso("Código cambiado. Úsalo la próxima vez que entres.");
+  } catch (e) {
+    const c = String(e?.code || "");
+    aviso(/invalid-credential|wrong-password/.test(c) ? "El código actual no es correcto" : errorAcceso(e));
+  } finally {
+    boton.disabled = false;
+    boton.textContent = "Cambiar código";
+  }
+});
+
+$("#cerrarSesion").onclick = async () => {
+  dejarDeEscucharPedidos();
+  try {
+    const { Au, auth } = await nube();
+    await Au.signOut(auth);
+  } catch (e) {}
+  $("#salirAdmin").click();
+  aviso("Sesión cerrada en este teléfono");
+};
 
 // ---------- Inicio ----------
 {
@@ -2041,19 +2552,20 @@ document.querySelectorAll(".logo").forEach(img => img.src = LOGO);
 $("#favicon").href = LOGO;
 renderTodo();
 
-// Vistas: la tienda y la página de Quiénes somos (#nosotros)
+// Vistas: la tienda, Quiénes somos (#nosotros) y Mis pedidos (#mispedidos)
 let vistaActual = null;
 function mostrarVista() {
   const destino = location.hash.slice(1);
-  const vista = destino === "nosotros" ? "nosotros" : "tienda";
+  const vista = ["nosotros", "mispedidos"].includes(destino) ? destino : "tienda";
   const cambio = vista !== vistaActual;
   vistaActual = vista;
   $("#tienda").hidden = vista !== "tienda";
   $("#vistaNosotros").hidden = vista !== "nosotros";
+  $("#vistaPedidos").hidden = vista !== "mispedidos";
   document.querySelectorAll(".nav a").forEach(a => {
-    const actual = vista === "nosotros" ? a.hash === "#nosotros" : a.hash === "#tienda";
-    actual ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current");
+    a.hash === "#" + vista ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current");
   });
+  if (cambio) vista === "mispedidos" ? abrirMisPedidos() : cerrarMisPedidos();
   const objetivo = vista === "tienda" && destino && document.getElementById(destino);
   if (objetivo) objetivo.scrollIntoView({ behavior: cambio ? "instant" : "smooth" });
   else if (cambio) window.scrollTo({ top: 0, behavior: "instant" });
