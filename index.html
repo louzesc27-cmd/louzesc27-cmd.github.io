@@ -541,7 +541,7 @@
     <datalist id="listaCategorias"></datalist>
     <div class="acciones">
       <label>Precio (COP)
-        <input id="pPrecio" type="number" min="0" step="1" required>
+        <input id="pPrecio" inputmode="numeric" autocomplete="off" placeholder="Ej: 35.000" required>
       </label>
       <label>Stock
         <input id="pStock" type="number" min="0" step="1" required>
@@ -803,6 +803,13 @@ const MONEDAS = { COP: "pesos", USD: "dólares", Bs: "bolívares" };
 const dosDecimales = n => n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const numeroVE = n => n.toLocaleString("es-VE");                 // 2.9 → "2,9"
 // Acepta "2,9", "2.9", "4000" o "4.000" (punto de miles)
+// Pesos: no tienen decimales, así que se quitan puntos y comas ("35.000", "35,000" o "35000" = 35000)
+function leerPesos(texto) {
+  const digitos = String(texto).replace(/\D/g, "");
+  return digitos ? parseInt(digitos, 10) : NaN;
+}
+const pesosCampo = n => n == null || n === "" ? "" : Number(n).toLocaleString("es-CO");   // 35000 → "35.000"
+
 function leerNumero(texto) {
   let t = String(texto).trim();
   if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, "");
@@ -1029,7 +1036,7 @@ function calcularVuelto() {
   const pago = pagoElegido();
   const texto = $("#vuelto").value.trim();
   if (!texto) return { estado: "exacto" };
-  const paga = leerNumero(texto);
+  const paga = pago.moneda === "USD" ? leerNumero(texto) : leerPesos(texto);
   if (!(paga > 0)) return { estado: "invalido" };
   const usd = pago.moneda === "USD";
   const fmt = n => usd ? "USD " + dosDecimales(n) : `${Math.round(n).toLocaleString("es-CO")} COP`;
@@ -1681,7 +1688,7 @@ function editarProducto(id) {
   $("#tituloProducto").textContent = p ? "Editar producto" : "Nuevo producto";
   $("#pNombre").value = p?.nombre || "";
   $("#pCategoria").value = p?.categoria || "";
-  $("#pPrecio").value = p?.precio ?? "";
+  $("#pPrecio").value = pesosCampo(p?.precio);
   $("#pStock").value = p?.stock ?? "";
   $("#pPersonaliza").value = p?.personaliza || "";
   $("#pImg").value = "";
@@ -1715,10 +1722,14 @@ $("#pFotos").addEventListener("click", e => {
 });
 
 alEnviar($("#formProducto"), () => {
+  if (isNaN(leerPesos($("#pPrecio").value))) {
+    $("#pPrecio").focus();
+    return aviso("Escribe el precio, por ejemplo 35.000");
+  }
   const valores = {
     nombre: $("#pNombre").value.trim(),
     categoria: $("#pCategoria").value.trim(),
-    precio: Math.max(0, Math.round(+$("#pPrecio").value)),
+    precio: leerPesos($("#pPrecio").value),
     stock: Math.max(0, Math.floor(+$("#pStock").value)),
     personaliza: $("#pPersonaliza").value,
     imagenes: [...imgsEdit],
@@ -1746,7 +1757,7 @@ function renderAdminZonas() {
   $("#listaZonas").innerHTML = datos.zonas.map((z, i) => `
     <div class="fila-admin">
       <input data-zona="${i}" data-campo="nombre" value="${esc(z.nombre)}" aria-label="Nombre de la zona" style="flex:2">
-      <input data-zona="${i}" data-campo="precio" type="number" min="0" step="1" value="${z.precio ?? ""}" placeholder="A convenir" aria-label="Precio del delivery" style="flex:1">
+      <input data-zona="${i}" data-campo="precio" inputmode="numeric" autocomplete="off" value="${pesosCampo(z.precio)}" placeholder="A convenir" aria-label="Precio del delivery" style="flex:1">
       <button class="quitar peligro" data-borrar="${i}">Borrar</button>
     </div>`).join("") || `<p class="vacio">No hay zonas. Agrega la primera.</p>`;
 }
@@ -1756,7 +1767,12 @@ $("#listaZonas").addEventListener("change", e => {
   if (i === undefined) return;
   const z = datos.zonas[i];
   if (e.target.dataset.campo === "nombre") z.nombre = e.target.value.trim() || "Zona sin nombre";
-  else z.precio = e.target.value === "" ? null : Math.max(0, Math.round(+e.target.value));
+  else {
+    const v = leerPesos(e.target.value);
+    if (e.target.value.trim() && isNaN(v)) return aviso("Escribe solo el monto, por ejemplo 8.000");
+    z.precio = isNaN(v) ? null : v;
+    e.target.value = pesosCampo(z.precio);
+  }
   if (guardarDatos()) aviso("Zona guardada");
 });
 
