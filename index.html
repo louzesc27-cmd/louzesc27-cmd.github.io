@@ -396,10 +396,11 @@
 <!-- Editor de foto del relicario -->
 <div class="modal" id="modalFoto" hidden>
   <div class="caja">
-    <h3>Personaliza tu relicario</h3>
-    <p class="sub">Sube una foto y acomódala dentro del corazón.</p>
+    <h3 id="tituloEditor">Personaliza tu pieza</h3>
+    <p class="sub" id="ayudaEditor"></p>
+    <div class="chips" id="lados" style="padding-top:0"></div>
     <canvas id="lienzo" width="600" height="600"></canvas>
-    <label class="btn-sec" for="inputFoto">Elegir foto</label>
+    <label class="btn-sec" for="inputFoto" id="elegirFoto">Elegir foto</label>
     <input type="file" id="inputFoto" accept="image/*" hidden>
     <div class="fila"><span class="sub">Zoom</span><input type="range" id="zoom" min="1" max="3" step="0.01" value="1" disabled></div>
     <p class="sub">Arrastra la foto para moverla.</p>
@@ -413,8 +414,8 @@
 <!-- Envío de fotos -->
 <div class="modal" id="modalEnvio" hidden>
   <div class="caja">
-    <h3>Falta enviar la foto</h3>
-    <p class="sub">WhatsApp no permite adjuntar fotos desde un enlace. Envía el pedido y luego comparte la foto en el mismo chat.</p>
+    <h3 id="tituloEnvio">Falta enviar la foto</h3>
+    <p class="sub">WhatsApp no permite adjuntar fotos desde un enlace. Envía el pedido y luego comparte las fotos en el mismo chat.</p>
     <button class="btn" id="irWhatsapp">1. Enviar pedido por WhatsApp</button>
     <div id="listaFotos" class="lista"></div>
     <button class="btn-sec" id="cerrarEnvio">Listo</button>
@@ -536,7 +537,13 @@
     </label>
     <div class="miniaturas" id="pFotos"></div>
     <p class="sub" id="pFotosAyuda" hidden>La primera es la portada. Toca ★ en otra foto para ponerla de portada.</p>
-    <label class="check"><input type="checkbox" id="pFoto"> La clienta sube su foto (se recorta en corazón)</label>
+    <label>Fotos de la clienta
+      <select id="pPersonaliza">
+        <option value="">No lleva fotos</option>
+        <option value="corazon">1 foto en corazón (relicario)</option>
+        <option value="llavero">2 fotos rectangulares, una por lado (llavero)</option>
+      </select>
+    </label>
     <div class="acciones">
       <button type="button" class="btn-sec" id="cancelarProducto">Cancelar</button>
       <button type="submit" class="btn">Guardar</button>
@@ -653,7 +660,8 @@ const DATOS_INICIALES = {
     { nombre: "Otra zona", precio: null },
   ],
   // imagenes: fotos del producto (la primera es la portada)
-  // foto: true = la clienta sube una foto que se recorta en forma de corazón
+  // personaliza: "corazon" = la clienta sube 1 foto en corazón (relicarios)
+  //              "llavero" = la clienta sube 2 fotos rectangulares, una por cada lado
   productos: [
     { id: 1,  nombre: "Collar corazón",           categoria: "Collares",   precio: 35000, stock: 10, imagenes: [] },
     { id: 2,  nombre: "Collar con inicial",       categoria: "Collares",   precio: 40000, stock: 6,  imagenes: [] },
@@ -663,8 +671,9 @@ const DATOS_INICIALES = {
     { id: 6,  nombre: "Anillo con circón",        categoria: "Anillos",    precio: 28000, stock: 3,  imagenes: [] },
     { id: 7,  nombre: "Aretes de argolla",        categoria: "Aretes",     precio: 22000, stock: 15, imagenes: [] },
     { id: 8,  nombre: "Aretes estrella",          categoria: "Aretes",     precio: 18000, stock: 2,  imagenes: [] },
-    { id: 9,  nombre: "Relicario corazón",        categoria: "Relicarios", precio: 55000, stock: 5,  imagenes: [], foto: true },
-    { id: 10, nombre: "Relicario corazón grande", categoria: "Relicarios", precio: 65000, stock: 3,  imagenes: [], foto: true },
+    { id: 9,  nombre: "Relicario corazón",        categoria: "Relicarios", precio: 55000, stock: 5,  imagenes: [], personaliza: "corazon" },
+    { id: 10, nombre: "Relicario corazón grande", categoria: "Relicarios", precio: 65000, stock: 3,  imagenes: [], personaliza: "corazon" },
+    { id: 11, nombre: "Llavero personalizado",    categoria: "Llaveros",   precio: 30000, stock: 10, imagenes: [], personaliza: "llavero" },
   ],
 };
 
@@ -681,10 +690,18 @@ function cargarDatos() {
         bs: guardado.tasas?.bs ?? base.tasas.bs,
       } };
       if (!d.pagos.length || typeof d.pagos[0] === "string") d.pagos = base.pagos;   // formato anterior
-      d.productos.forEach(p => {   // productos guardados cuando solo tenían una foto
+      d.productos.forEach(p => {   // productos guardados con el formato anterior
         if (!Array.isArray(p.imagenes)) p.imagenes = p.img ? [p.img] : [];
         delete p.img;
+        if (p.foto === true) p.personaliza = "corazon";
+        delete p.foto;
       });
+      if (!d.llaveroAgregado) {   // agrega el llavero una sola vez a una tienda ya guardada
+        const llavero = base.productos.find(x => x.personaliza === "llavero");
+        if (!d.productos.some(x => x.personaliza === "llavero"))
+          d.productos.push({ ...llavero, id: Math.max(0, ...d.productos.map(x => x.id)) + 1 });
+        d.llaveroAgregado = true;
+      }
       d.pagos.forEach(m => {   // métodos guardados antes de tener datos de pago
         const igual = base.pagos.find(b => b.nombre === m.nombre && b.moneda === m.moneda);
         if (m.datos === undefined) m.datos = igual?.datos || "";
@@ -726,7 +743,14 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const prod = id => datos.productos.find(p => p.id === id);
 const pesos = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const dinero = n => pesos.format(n);
-let carrito = [];        // { key, id, cant, foto }
+let carrito = [];        // { key, id, cant, fotos }
+
+// Productos que llevan fotos de la clienta
+const PERSONALIZA = {
+  corazon: { lados: 1, forma: "corazon", etiqueta: "Con tu foto", ayuda: "Sube una foto y acomódala dentro del corazón." },
+  llavero: { lados: 2, forma: "rect", etiqueta: "Con 2 fotos", ayuda: "Sube una foto para cada lado y acomódala dentro del rectángulo." },
+};
+const tipoDe = p => PERSONALIZA[p.personaliza] || null;
 let categoria = "Todos";
 let siguienteKey = 1;
 
@@ -811,10 +835,10 @@ function renderCatalogo() {
       if (p.stock <= 3) etiqueta = `<span class="etiqueta poco">Quedan ${p.stock}</span>`;
       boton = disponible(p.id) <= 0
         ? `<button class="agregar" disabled>Ya tienes todas</button>`
-        : `<button class="agregar" data-add="${p.id}">${p.foto ? "Personalizar" : "Agregar"}</button>`;
+        : `<button class="agregar" data-add="${p.id}">${tipoDe(p) ? "Personalizar" : "Agregar"}</button>`;
     }
 
-    const personal = p.foto ? `<span class="etiqueta personal">Con tu foto</span>` : "";
+    const personal = tipoDe(p) ? `<span class="etiqueta personal">${tipoDe(p).etiqueta}</span>` : "";
     return `<article class="card ${p.stock <= 0 ? "sin-stock" : ""}">
       <div class="foto" data-ver="${p.id}">${htmlGaleria(p)}${etiqueta}${personal}</div>
       <div class="info">
@@ -857,7 +881,7 @@ function abrirVer(id) {
     : p.stock <= 3 ? `Quedan ${p.stock}` : "Disponible";
   const b = $("#verAgregar"), libre = disponible(id);
   b.disabled = p.stock <= 0 || libre <= 0;
-  b.textContent = p.stock <= 0 ? "Agotado" : libre <= 0 ? "Ya tienes todas" : p.foto ? "Personalizar" : "Agregar al carrito";
+  b.textContent = p.stock <= 0 ? "Agotado" : libre <= 0 ? "Ya tienes todas" : tipoDe(p) ? "Personalizar" : "Agregar al carrito";
   $("#modalVer").hidden = false;
 }
 
@@ -871,15 +895,15 @@ $("#cerrarVer").onclick = () => $("#modalVer").hidden = true;
 $("#modalVer").addEventListener("click", e => { if (e.target.id === "modalVer") $("#modalVer").hidden = true; });
 $("#verAgregar").onclick = () => {
   $("#modalVer").hidden = true;
-  prod(verId).foto ? abrirEditor(verId) : agregar(verId);
+  tipoDe(prod(verId)) ? abrirEditor(verId) : agregar(verId);
 };
 
 // ---------- Carrito ----------
-function agregar(id, foto = null) {
+function agregar(id, fotos = null) {
   if (disponible(id) <= 0) return aviso("No quedan más unidades");
-  const linea = !foto && carrito.find(l => l.id === id && !l.foto);
+  const linea = !fotos && carrito.find(l => l.id === id && !l.fotos);
   if (linea) linea.cant++;
-  else carrito.push({ key: siguienteKey++, id, cant: 1, foto });
+  else carrito.push({ key: siguienteKey++, id, cant: 1, fotos });
   actualizar();
   aviso("Agregado al carrito");
 }
@@ -917,9 +941,10 @@ function renderCarrito() {
   let f = 0;
   $("#items").innerHTML = carrito.length ? carrito.map(l => {
     const p = prod(l.id);
-    const mini = l.foto ? `<img class="mini corazon" src="${l.foto}" alt="Foto del relicario">`
+    const numeros = l.fotos ? l.fotos.map(() => ++f) : [];
+    const mini = l.fotos ? `<img class="mini corazon" src="${l.fotos[0]}" alt="Tu foto">`
       : p.imagenes[0] ? `<img class="mini" src="${esc(p.imagenes[0])}" alt="">` : `<div class="mini"></div>`;
-    const controles = l.foto
+    const controles = l.fotos
       ? `<button class="quitar" data-quitar="${l.key}">Quitar</button>`
       : `<div class="cant">
            <button data-menos="${l.key}" aria-label="Quitar uno">−</button>
@@ -929,7 +954,7 @@ function renderCarrito() {
     return `<div class="item">${mini}
       <div class="item-info">
         <div class="nombre">${esc(p.nombre)}</div>
-        <small>${dinero(p.precio * l.cant)}${l.foto ? ` (foto #${++f})` : ""}</small>
+        <small>${dinero(p.precio * l.cant)}${numeros.length ? ` (${numeros.length > 1 ? "fotos" : "foto"} ${numeros.map(n => "#" + n).join(" y ")})` : ""}</small>
       </div>${controles}</div>`;
   }).join("") : `<p class="vacio">Tu carrito está vacío. Agrega algo del catálogo.</p>`;
 
@@ -1163,7 +1188,10 @@ function mensajePedido() {
   let f = 0;
   const lineas = carrito.map(l => {
     const p = prod(l.id);
-    return `• ${l.cant} x ${p.nombre}${l.foto ? ` (con foto #${++f})` : ""}: ${cop(p.precio * l.cant)}`;
+    let detalle = "";
+    if (l.fotos?.length === 1) detalle = ` (con foto #${++f})`;
+    else if (l.fotos) detalle = ` (${l.fotos.map((_, k) => `lado ${k + 1}: foto #${++f}`).join(", ")})`;
+    return `• ${l.cant} x ${p.nombre}${detalle}: ${cop(p.precio * l.cant)}`;
   });
 
   // Monto a cancelar
@@ -1220,7 +1248,7 @@ function mensajePedido() {
     cuando,
     `${t("¿Necesitas vuelto?:")} ${vuelto}`,
     ...(efectivo && pago.moneda === "USD" ? ["", `${t("Voy a pagar en dólares:")} te envío la foto del billete para que confirmes que está en buen estado.`] : []),
-    ...(f ? ["", `${t(f > 1 ? "Fotos del relicario:" : "Foto del relicario:")} te ${f > 1 ? "las" : "la"} envío en el siguiente mensaje.`] : []),
+    ...(f ? ["", `${t(f > 1 ? `Fotos para personalizar (${f}):` : "Foto para personalizar:")} te ${f > 1 ? "las" : "la"} envío en el siguiente mensaje.`] : []),
   ].join("\n");
 }
 
@@ -1241,12 +1269,27 @@ async function compartirFoto(dataURL, nombreArchivo) {
   a.click();
 }
 
-// ---------- Editor de foto en corazón ----------
+// ---------- Editor de fotos (corazón o rectángulo, uno o dos lados) ----------
 const lienzo = $("#lienzo"), ctx = lienzo.getContext("2d"), S = lienzo.width;
-let editor = { id: null, img: null, zoom: 1, x: 0, y: 0 };
+let editor = { id: null, forma: "corazon", lados: [], actual: 0 };
 let arrastre = null;
+const ladoActual = () => editor.lados[editor.actual];
 
-function trazarCorazon(c) {
+// Zona de la foto dentro del lienzo: el rectángulo del llavero es vertical, como una placa
+const RECT = { x: S * 0.19, y: S * 0.04, w: S * 0.62, h: S * 0.92, r: S * 0.04 };
+
+function trazarForma(c) {
+  if (editor.forma === "rect") {
+    const { x, y, w, h, r } = RECT;   // rectángulo con esquinas redondeadas (sirve también en teléfonos viejos)
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+    return;
+  }
   const k = S * 0.92 / 110;
   c.save();
   c.translate(S / 2, S / 2); c.scale(k, k); c.translate(-75, -72.5);
@@ -1262,80 +1305,116 @@ function trazarCorazon(c) {
   c.restore();
 }
 
-function dibujar(c, guia) {
-  const { img, zoom, x, y } = editor;
+function dibujar(c, guia, lado = ladoActual()) {
+  const { img, zoom, x, y } = lado;
   c.clearRect(0, 0, S, S);
   if (!img) {
-    trazarCorazon(c); c.fillStyle = "#560c18"; c.fill();
+    trazarForma(c); c.fillStyle = "#560c18"; c.fill();
     c.fillStyle = "#e3c996"; c.font = "600 28px Manrope, sans-serif"; c.textAlign = "center";
-    c.fillText("Tu foto aquí", S / 2, S / 2);
+    c.fillText(editor.lados.length > 1 ? `Foto del lado ${editor.actual + 1}` : "Tu foto aquí", S / 2, S / 2);
     return;
   }
   const k = Math.max(S / img.width, S / img.height) * zoom;
   const w = img.width * k, h = img.height * k;
   const px = (S - w) / 2 + x, py = (S - h) / 2 + y;
   if (guia) { c.globalAlpha = 0.2; c.drawImage(img, px, py, w, h); c.globalAlpha = 1; }
-  c.save(); trazarCorazon(c); c.clip(); c.drawImage(img, px, py, w, h); c.restore();
-  if (guia) { trazarCorazon(c); c.lineWidth = 3; c.strokeStyle = "rgba(227,201,150,.85)"; c.stroke(); }
+  c.save(); trazarForma(c); c.clip(); c.drawImage(img, px, py, w, h); c.restore();
+  if (guia) { trazarForma(c); c.lineWidth = 3; c.strokeStyle = "rgba(227,201,150,.85)"; c.stroke(); }
 }
 
 function limitar() {
-  const { img, zoom } = editor;
-  const k = Math.max(S / img.width, S / img.height) * zoom;
-  const mx = (img.width * k - S) / 2, my = (img.height * k - S) / 2;
-  editor.x = Math.max(-mx, Math.min(mx, editor.x));
-  editor.y = Math.max(-my, Math.min(my, editor.y));
+  const l = ladoActual();
+  const k = Math.max(S / l.img.width, S / l.img.height) * l.zoom;
+  const mx = (l.img.width * k - S) / 2, my = (l.img.height * k - S) / 2;
+  l.x = Math.max(-mx, Math.min(mx, l.x));
+  l.y = Math.max(-my, Math.min(my, l.y));
+}
+
+// Botones de lado, zoom y botón principal según lo que falta
+function refrescarEditor() {
+  const l = ladoActual();
+  const faltan = editor.lados.map((x, k) => x.img ? null : k).filter(k => k !== null);
+  $("#lados").hidden = editor.lados.length < 2;
+  $("#lados").innerHTML = editor.lados.map((x, k) =>
+    `<button type="button" class="chip ${k === editor.actual ? "activo" : ""}" data-lado="${k}">Lado ${k + 1}${x.img ? " ✓" : ""}</button>`).join("");
+  $("#zoom").value = l.zoom;
+  $("#zoom").disabled = !l.img;
+  $("#inputFoto").value = "";
+  $("#elegirFoto").textContent = l.img ? "Cambiar foto" : editor.lados.length > 1 ? `Elegir foto del lado ${editor.actual + 1}` : "Elegir foto";
+  const b = $("#confirmarFoto");
+  if (!faltan.length) { b.disabled = false; b.textContent = "Agregar al carrito"; }
+  else if (l.img) { b.disabled = false; b.textContent = `Seguir con el lado ${faltan[0] + 1}`; b.dataset.ir = faltan[0]; }
+  else { b.disabled = true; b.textContent = "Agregar al carrito"; }
+  dibujar(ctx, true);
 }
 
 function abrirEditor(id) {
-  editor = { id, img: null, zoom: 1, x: 0, y: 0 };
-  $("#inputFoto").value = "";
-  $("#zoom").value = 1;
-  $("#zoom").disabled = true;
-  $("#confirmarFoto").disabled = true;
-  dibujar(ctx, true);
+  const p = prod(id), tipo = tipoDe(p);
+  editor = { id, forma: tipo.forma, actual: 0,
+             lados: Array.from({ length: tipo.lados }, () => ({ img: null, zoom: 1, x: 0, y: 0 })) };
+  $("#tituloEditor").textContent = p.nombre;
+  $("#ayudaEditor").textContent = tipo.ayuda;
+  refrescarEditor();
   $("#modalFoto").hidden = false;
 }
+
+$("#lados").addEventListener("click", e => {
+  const b = e.target.closest("[data-lado]");
+  if (!b) return;
+  editor.actual = +b.dataset.lado;
+  refrescarEditor();
+});
 
 $("#inputFoto").addEventListener("change", e => {
   const archivo = e.target.files[0];
   if (!archivo) return;
   const img = new Image();
   img.onload = () => {
-    Object.assign(editor, { img, zoom: 1, x: 0, y: 0 });
-    $("#zoom").value = 1;
-    $("#zoom").disabled = false;
-    $("#confirmarFoto").disabled = false;
-    dibujar(ctx, true);
+    Object.assign(ladoActual(), { img, zoom: 1, x: 0, y: 0 });
+    refrescarEditor();
   };
   img.onerror = () => aviso("No se pudo abrir esa imagen. Prueba con otra foto.");
   img.src = URL.createObjectURL(archivo);
 });
 
-$("#zoom").addEventListener("input", e => { editor.zoom = +e.target.value; limitar(); dibujar(ctx, true); });
+$("#zoom").addEventListener("input", e => { ladoActual().zoom = +e.target.value; limitar(); dibujar(ctx, true); });
 
 lienzo.addEventListener("pointerdown", e => {
-  if (!editor.img) return;
+  if (!ladoActual().img) return;
   arrastre = { x: e.clientX, y: e.clientY };
   lienzo.setPointerCapture(e.pointerId);
 });
 lienzo.addEventListener("pointermove", e => {
   if (!arrastre) return;
   const f = S / lienzo.getBoundingClientRect().width;
-  editor.x += (e.clientX - arrastre.x) * f;
-  editor.y += (e.clientY - arrastre.y) * f;
+  ladoActual().x += (e.clientX - arrastre.x) * f;
+  ladoActual().y += (e.clientY - arrastre.y) * f;
   arrastre = { x: e.clientX, y: e.clientY };
   limitar(); dibujar(ctx, true);
 });
 lienzo.addEventListener("pointerup", () => arrastre = null);
 lienzo.addEventListener("pointercancel", () => arrastre = null);
 
+// Recorta cada lado: el corazón sale cuadrado con fondo transparente, el rectángulo sale con su tamaño exacto
+function exportarLado(lado) {
+  const completo = document.createElement("canvas");
+  completo.width = completo.height = S;
+  dibujar(completo.getContext("2d"), false, lado);
+  if (editor.forma !== "rect") return completo.toDataURL("image/png");
+  const recorte = document.createElement("canvas");
+  recorte.width = RECT.w; recorte.height = RECT.h;
+  recorte.getContext("2d").drawImage(completo, -RECT.x, -RECT.y);
+  return recorte.toDataURL("image/png");
+}
+
 $("#cancelarFoto").onclick = () => $("#modalFoto").hidden = true;
 $("#confirmarFoto").onclick = () => {
-  const salida = document.createElement("canvas");
-  salida.width = salida.height = S;
-  dibujar(salida.getContext("2d"), false);
-  agregar(editor.id, salida.toDataURL("image/png"));
+  const faltan = editor.lados.some(l => !l.img);
+  if (faltan) {
+    editor.actual = +$("#confirmarFoto").dataset.ir;
+    return refrescarEditor();
+  }
+  agregar(editor.id, editor.lados.map(exportarLado));
   $("#modalFoto").hidden = true;
 };
 
@@ -1346,7 +1425,7 @@ $("#catalogo").addEventListener("click", e => {
   const b = e.target.closest("[data-add]");
   if (!b) return;
   const p = prod(+b.dataset.add);
-  p.foto ? abrirEditor(p.id) : agregar(p.id);
+  tipoDe(p) ? abrirEditor(p.id) : agregar(p.id);
 });
 
 $("#chips").addEventListener("click", e => {
@@ -1434,18 +1513,23 @@ alEnviar($("#formPedido"), () => {
     return aviso("Comparte tu ubicación o pega el enlace de Google Maps");
   }
   const url = `https://wa.me/${datos.tienda.whatsapp}?text=${encodeURIComponent(mensajePedido())}`;
-  const fotos = carrito.filter(l => l.foto);
+  // Todas las fotos de la clienta, numeradas igual que en el mensaje
+  const fotos = carrito.filter(l => l.fotos).flatMap(l =>
+    l.fotos.map((src, k) => ({ src, texto: prod(l.id).nombre + (l.fotos.length > 1 ? `, lado ${k + 1}` : "") })));
   if (!fotos.length) return window.open(url, "_blank");
 
+  $("#tituloEnvio").textContent = fotos.length > 1 ? "Faltan enviar las fotos" : "Falta enviar la foto";
   $("#irWhatsapp").onclick = () => window.open(url, "_blank");
-  $("#listaFotos").innerHTML = fotos.map((l, i) => `
+  $("#listaFotos").innerHTML = fotos.map((ft, i) => `
     <div class="paso">
-      <img src="${l.foto}" alt="">
-      <button class="btn-sec" data-foto="${i}">2. Compartir foto${fotos.length > 1 ? " #" + (i + 1) : ""}</button>
+      <img src="${ft.src}" alt="">
+      <div class="item-info"><small class="sub">${esc(ft.texto)}</small>
+        <button class="btn-sec" style="width:100%" data-foto="${i}">2. Compartir foto${fotos.length > 1 ? " #" + (i + 1) : ""}</button>
+      </div>
     </div>`).join("");
   $("#listaFotos").onclick = ev => {
     const b = ev.target.closest("[data-foto]");
-    if (b) compartirFoto(fotos[+b.dataset.foto].foto, `relicario-${+b.dataset.foto + 1}.png`);
+    if (b) compartirFoto(fotos[+b.dataset.foto].src, `foto-${+b.dataset.foto + 1}.png`);
   };
   $("#modalEnvio").hidden = false;
 });
@@ -1540,7 +1624,7 @@ function editarProducto(id) {
   $("#pCategoria").value = p?.categoria || "";
   $("#pPrecio").value = p?.precio ?? "";
   $("#pStock").value = p?.stock ?? "";
-  $("#pFoto").checked = !!p?.foto;
+  $("#pPersonaliza").value = p?.personaliza || "";
   $("#pImg").value = "";
   $("#eliminarProducto").hidden = !p;
   $("#listaCategorias").innerHTML = [...new Set(datos.productos.map(x => x.categoria))]
@@ -1577,7 +1661,7 @@ alEnviar($("#formProducto"), () => {
     categoria: $("#pCategoria").value.trim(),
     precio: Math.max(0, Math.round(+$("#pPrecio").value)),
     stock: Math.max(0, Math.floor(+$("#pStock").value)),
-    foto: $("#pFoto").checked,
+    personaliza: $("#pPersonaliza").value,
     imagenes: [...imgsEdit],
   };
   const respaldo = JSON.stringify(datos.productos);
