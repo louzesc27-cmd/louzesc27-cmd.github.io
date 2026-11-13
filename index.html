@@ -399,8 +399,10 @@
 <div class="modal" id="modalEnvio" hidden>
   <div class="caja">
     <h3 id="tituloEnvio">Falta enviar la foto</h3>
-    <p class="sub">WhatsApp no permite adjuntar fotos desde un enlace. Envía el pedido y luego comparte las fotos en el mismo chat.</p>
+    <p class="sub">WhatsApp no deja adjuntar fotos desde un enlace, por eso son dos pasos.</p>
     <button class="btn" id="irWhatsapp">1. Enviar pedido por WhatsApp</button>
+    <button class="btn" id="enviarFotos">2. Enviar las fotos</button>
+    <p class="sub" id="ayudaFotos"></p>
     <div id="listaFotos" class="lista"></div>
     <button class="btn-sec" id="cerrarEnvio">Listo</button>
   </div>
@@ -1317,21 +1319,42 @@ function mensajePedido() {
   ].join("\n");
 }
 
-async function compartirFoto(dataURL, nombreArchivo) {
-  try {
-    const blob = await (await fetch(dataURL)).blob();
-    const archivo = new File([blob], nombreArchivo, { type: "image/png" });
-    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-      await navigator.share({ files: [archivo] });
-      return;
-    }
-  } catch (e) {
-    if (e.name === "AbortError") return;
+// Convierte una foto guardada en el carrito en un archivo, sin esperas
+function archivoDesdeDataURL(dataURL, nombre) {
+  const [cabecera, base64] = dataURL.split(",");
+  const tipo = cabecera.match(/:(.*?);/)[1];
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new File([bytes], nombre, { type: tipo });
+}
+
+const puedeCompartir = archivos => !!(navigator.canShare && navigator.canShare({ files: archivos }));
+
+// Abre el menú de compartir del teléfono (para elegir WhatsApp). Tiene que llamarse justo al tocar
+// el botón, sin esperas antes: el iPhone bloquea el menú si pasa algo entre el toque y la llamada.
+function compartirArchivos(archivos) {
+  if (puedeCompartir(archivos)) {
+    navigator.share({ files: archivos }).catch(e => {
+      if (e.name !== "AbortError") descargarArchivos(archivos);
+    });
+    return;
   }
-  const a = document.createElement("a");   // si no se puede compartir, se descarga
-  a.href = dataURL;
-  a.download = nombreArchivo;
-  a.click();
+  descargarArchivos(archivos);
+}
+
+function descargarArchivos(archivos) {
+  archivos.forEach(archivo => {
+    const url = URL.createObjectURL(archivo);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = archivo.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  });
+  aviso(archivos.length > 1 ? "Fotos descargadas. Adjúntalas en el chat de WhatsApp." : "Foto descargada. Adjúntala en el chat de WhatsApp.");
 }
 
 // ---------- Editor de fotos (corazón o rectángulo, uno o dos lados) ----------
@@ -1464,12 +1487,16 @@ lienzo.addEventListener("pointercancel", () => arrastre = null);
 function exportarLado(lado) {
   const completo = document.createElement("canvas");
   completo.width = completo.height = S;
-  dibujar(completo.getContext("2d"), false, lado);
-  if (editor.forma !== "rect") return completo.toDataURL("image/png");
+  const c = completo.getContext("2d");
+  dibujar(c, false, lado);
+  c.globalCompositeOperation = "destination-over";   // fondo blanco: WhatsApp pone negro lo transparente
+  c.fillStyle = "#ffffff";
+  c.fillRect(0, 0, S, S);
+  if (editor.forma !== "rect") return completo.toDataURL("image/jpeg", 0.92);
   const recorte = document.createElement("canvas");
   recorte.width = RECT.w; recorte.height = RECT.h;
   recorte.getContext("2d").drawImage(completo, -RECT.x, -RECT.y);
-  return recorte.toDataURL("image/png");
+  return recorte.toDataURL("image/jpeg", 0.92);
 }
 
 $("#cancelarFoto").onclick = () => $("#modalFoto").hidden = true;
@@ -1585,16 +1612,28 @@ alEnviar($("#formPedido"), () => {
 
   $("#tituloEnvio").textContent = fotos.length > 1 ? "Faltan enviar las fotos" : "Falta enviar la foto";
   $("#irWhatsapp").onclick = () => window.open(url, "_blank");
+
+  // Los archivos se preparan desde ya para que al tocar el botón se abra el menú de compartir al instante
+  const archivos = fotos.map((ft, i) => archivoDesdeDataURL(ft.src, `foto-${i + 1}.jpg`));
+  const compartir = puedeCompartir(archivos);
+  const varias = archivos.length > 1;
+  $("#enviarFotos").textContent = compartir
+    ? `2. Enviar ${varias ? `las ${archivos.length} fotos` : "la foto"}`
+    : `2. Descargar ${varias ? "las fotos" : "la foto"}`;
+  $("#ayudaFotos").textContent = compartir
+    ? `Después de enviar el pedido, vuelve aquí y toca el paso 2. Elige WhatsApp y luego el chat de ${datos.tienda.nombre}.`
+    : `Después de enviar el pedido, descarga ${varias ? "las fotos y adjúntalas" : "la foto y adjúntala"} en el chat de ${datos.tienda.nombre}.`;
+  $("#enviarFotos").onclick = () => compartirArchivos(archivos);
   $("#listaFotos").innerHTML = fotos.map((ft, i) => `
     <div class="paso">
       <img src="${ft.src}" alt="">
-      <div class="item-info"><small class="sub">${esc(ft.texto)}</small>
-        <button class="btn-sec" style="width:100%" data-foto="${i}">2. Compartir foto${fotos.length > 1 ? " #" + (i + 1) : ""}</button>
+      <div class="item-info"><small class="sub" style="display:block">Foto #${i + 1}: ${esc(ft.texto)}</small>
+        ${varias ? `<button class="quitar" data-foto="${i}">Enviar solo esta</button>` : ""}
       </div>
     </div>`).join("");
   $("#listaFotos").onclick = ev => {
     const b = ev.target.closest("[data-foto]");
-    if (b) compartirFoto(fotos[+b.dataset.foto].src, `foto-${+b.dataset.foto + 1}.png`);
+    if (b) compartirArchivos([archivos[+b.dataset.foto]]);
   };
   $("#modalEnvio").hidden = false;
 });
